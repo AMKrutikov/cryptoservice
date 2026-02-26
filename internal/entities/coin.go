@@ -7,3 +7,5 @@ type Coin struct {
 	Price    float32
 	ActualAT time.Time
 }
+
+// далее пишем контсруктор
