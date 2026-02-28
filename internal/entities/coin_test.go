@@ -11,11 +11,11 @@ import (
 
 // Запуск и покрытие тестов: go test ./... -cover
 
-// Визуализируем вывод тестов в рамках пакета Coin
+// Визуализируем вывод тестов в рамках пакета entities_test
 func TestMain(m *testing.M) {
-	fmt.Println("TEST Package Coin")
+	fmt.Println("TEST Package entities_test")
 	res := m.Run()
-	fmt.Println("The end test Package Coin")
+	fmt.Println("The end test Package entities_test")
 
 	os.Exit(res)
 }
