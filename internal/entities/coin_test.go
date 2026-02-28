@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"githab.com/AMKrutikov/cryptoservice/internal/entities"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // Запуск и покрытие тестов: go test ./... -cover
@@ -67,14 +67,12 @@ func TestNewCoin(t *testing.T) {
 		t.Run(elem.name, func(t *testing.T) {
 			if elem.create_coin == true {
 				Coin, err := entities.NewCoin(elem.title, elem.price, time.Now())
-				assert.Equal(t, Coin == nil, false,
+				require.Equal(t, Coin == nil, false,
 					fmt.Sprintf("coin not validation: err = %v", err))
-				if (Coin == nil) == false {
-					fmt.Println("Coin created")
-				}
+				fmt.Println("Coin created")
 			} else {
 				Coin, err := entities.NewCoin(elem.title, elem.price, time.Now())
-				assert.Equal(t, Coin == nil, true,
+				require.Equal(t, Coin == nil, true,
 					fmt.Sprintf("coin not validation: err = %v", err))
 				fmt.Println("Coin not created")
 			}
