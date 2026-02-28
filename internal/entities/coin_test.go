@@ -14,9 +14,9 @@ import (
 
 // Визуализируем вывод тестов в рамках пакета entities_test
 func TestMain(m *testing.M) {
-	fmt.Println("TEST Package entities_test")
+	fmt.Println("___START test Package entities_test___")
 	res := m.Run()
-	fmt.Println("The end test Package entities_test")
+	fmt.Println("___THE END test Package entities_test___")
 
 	os.Exit(res)
 }
@@ -24,47 +24,60 @@ func TestMain(m *testing.M) {
 //
 
 func TestNewCoin(t *testing.T) {
-	t.Run("title empty", func(t *testing.T) {
-		title := ""
-		price := 100.00
-		actualAT := time.Now()
 
-		Coin, err := entities.NewCoin(title, price, actualAT)
-		assert.Equal(t, Coin != nil, Coin != nil,
-			fmt.Sprintf("coin not validation: err = %v", err))
-	})
+	testCases := []struct {
+		name        string
+		title       string
+		price       float64
+		create_coin bool
+	}{
+		{
+			name:        "current data",
+			title:       "bitcoin",
+			price:       100.00,
+			create_coin: true,
+		},
+		{
+			name:        "title empty",
+			title:       "",
+			price:       100.00,
+			create_coin: false,
+		},
+		{
+			name:        "price zero",
+			title:       "bitcoin",
+			price:       0.00,
+			create_coin: false,
+		},
+		{
+			name:        "price negative",
+			title:       "bitcoin",
+			price:       -1.00,
+			create_coin: false,
+		},
+		{
+			name:        "title empty AND price zero or negative",
+			title:       " ",
+			price:       -1.00,
+			create_coin: false,
+		},
+	}
 
-	t.Run("price zero or negative", func(t *testing.T) {
-		title := "bitcoin"
-		price := 0.00
-		actualAT := time.Now()
-
-		Coin, err := entities.NewCoin(title, price, actualAT)
-		assert.Equal(t, Coin != nil, Coin != nil,
-			fmt.Sprintf("coin not validation: err = %v", err))
-
-		price = -1.00
-		Coin, err = entities.NewCoin(title, price, actualAT)
-		assert.Equal(t, Coin != nil, Coin != nil,
-			fmt.Sprintf("coin not validation: err = %v", err))
-	})
-
-	t.Run("title empty AND price zero or negative", func(t *testing.T) {
-		title := " "
-		price := 0.00
-		actualAT := time.Now()
-
-		Coin, err := entities.NewCoin(title, price, actualAT)
-		assert.Equal(t, Coin != nil, Coin != nil,
-			fmt.Errorf("coin not validation: err = %v", err))
-	})
-	t.Run("current data", func(t *testing.T) {
-		title := "Bitcoin"
-		price := 100.00
-		actualAT := time.Now()
-
-		Coin, err := entities.NewCoin(title, price, actualAT)
-		assert.Equal(t, Coin == nil, Coin == nil,
-			fmt.Sprintf("coin not validation: err = %v", err))
-	})
+	for _, elem := range testCases {
+		t.Run(elem.name, func(t *testing.T) {
+			if elem.create_coin == true {
+				Coin, err := entities.NewCoin(elem.title, elem.price, time.Now())
+				assert.Equal(t, Coin == nil, false,
+					fmt.Sprintf("coin not validation: err = %v", err))
+				if (Coin == nil) == false {
+					fmt.Println("Coin created")
+				}
+			} else {
+				Coin, err := entities.NewCoin(elem.title, elem.price, time.Now())
+				assert.Equal(t, Coin == nil, true,
+					fmt.Sprintf("coin not validation: err = %v", err))
+				fmt.Println("Coin not created")
+			}
+		})
+	}
 }
