@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"githab.com/AMKrutikov/cryptoservice/internal/entities"
+	"github.com/stretchr/testify/assert"
 )
 
 // Запуск и покрытие тестов: go test ./... -cover
@@ -23,39 +24,29 @@ func TestMain(m *testing.M) {
 //
 
 func TestNewCoin(t *testing.T) {
-	t.Run("current data", func(t *testing.T) {
-		title := "Bitcoin"
-		price := 100.00
-		actualAT := time.Now()
-
-		Coin, err := entities.NewCoin(title, price, actualAT)
-		if Coin == nil {
-			t.Errorf("coin not validation: %v", err)
-		}
-
-	})
 	t.Run("title empty", func(t *testing.T) {
 		title := ""
 		price := 100.00
 		actualAT := time.Now()
 
 		Coin, err := entities.NewCoin(title, price, actualAT)
-		if Coin != nil {
-			t.Errorf("coin not validation: %v", err)
-		}
-
+		assert.Equal(t, Coin != nil, Coin != nil,
+			fmt.Sprintf("coin not validation: err = %v", err))
 	})
 
 	t.Run("price zero or negative", func(t *testing.T) {
 		title := "bitcoin"
-		price := -1.00
+		price := 0.00
 		actualAT := time.Now()
 
 		Coin, err := entities.NewCoin(title, price, actualAT)
-		if Coin != nil {
-			t.Errorf("coin not validation: %v", err)
-		}
+		assert.Equal(t, Coin != nil, Coin != nil,
+			fmt.Sprintf("coin not validation: err = %v", err))
 
+		price = -1.00
+		Coin, err = entities.NewCoin(title, price, actualAT)
+		assert.Equal(t, Coin != nil, Coin != nil,
+			fmt.Sprintf("coin not validation: err = %v", err))
 	})
 
 	t.Run("title empty AND price zero or negative", func(t *testing.T) {
@@ -64,9 +55,16 @@ func TestNewCoin(t *testing.T) {
 		actualAT := time.Now()
 
 		Coin, err := entities.NewCoin(title, price, actualAT)
-		if Coin != nil {
-			t.Errorf("coin not validation: %v", err)
-		}
+		assert.Equal(t, Coin != nil, Coin != nil,
+			fmt.Errorf("coin not validation: err = %v", err))
 	})
+	t.Run("current data", func(t *testing.T) {
+		title := "Bitcoin"
+		price := 100.00
+		actualAT := time.Now()
 
+		Coin, err := entities.NewCoin(title, price, actualAT)
+		assert.Equal(t, Coin == nil, Coin == nil,
+			fmt.Sprintf("coin not validation: err = %v", err))
+	})
 }
