@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"githab.com/AMKrutikov/cryptoservice/internal/cases"
+	"githab.com/AMKrutikov/cryptoservice/internal/entities"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -26,21 +26,15 @@ type MockCryptoProvider struct {
 	mock.Mock
 }
 
-func (c *MockCryptoProvider) GetActualRates(ctx context.Context, titles []string) ([]cases.Provider, error) {
+func (c *MockCryptoProvider) GetActualRates(ctx context.Context, titles []string) ([]entities.Coin, error) {
 	argumets := c.Called(ctx, titles)
-	return argumets.Get(0).([]cases.Provider), argumets.Error(1)
+	return argumets.Get(0).([]entities.Coin), argumets.Error(1)
 }
 
 // Storage Mock
 
-// 	dataCryptoProvider := []cases.Coin{
-// 		{Titl: "Bitcoin"},
-// 		{Titl: "Ethereum"},
-// 	}
-// 	mockCryptoProvider.On("GetActualRates").Return(dataCryptoProvider, nil)
-
 func TestGetActualRates(t *testing.T) {
-	fmt.Println("_START TEST TestRunService_")
+	fmt.Println("_START TEST TestGetActualRates")
 
 	mockCryptoProvider := new(MockCryptoProvider)
 	t.Cleanup(func() {
@@ -48,9 +42,9 @@ func TestGetActualRates(t *testing.T) {
 		fmt.Println("THE END TEST TestRunService")
 	})
 
-	dataCryptoProvider := []cases.Provider{
-		{Titl: "Bitcoin"},
-		{Titl: "Ethereum"},
+	dataCryptoProvider := []entities.Coin{
+		{Title: "Bitcoin"},
+		{Title: "Ethereum"},
 	}
 	mockCryptoProvider.On("GetActualRates", mock.Anything, mock.Anything).Return(dataCryptoProvider, nil)
 
@@ -65,5 +59,5 @@ func TestGetActualRates(t *testing.T) {
 		mockCryptoProvider.GetActualRates(ctx, titles)
 	})
 
-	fmt.Println("_STOP TEST TestRunService_")
+	fmt.Println("_STOP TEST TestGetActualRates_")
 }

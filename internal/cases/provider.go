@@ -1,19 +1,21 @@
 package cases
 
-import "context"
+import (
+	"context"
+
+	"githab.com/AMKrutikov/cryptoservice/internal/entities"
+)
 
 type CryptoProvider interface {
-	GetActualRates(ctx context.Context, titles []string) ([]Provider, error)
+	GetActualRates(ctx context.Context, titles []string) ([]entities.Coin, error)
 }
 
-type Provider struct {
-	Titl string
-}
+type myCoin entities.Coin
 
-func (p *Provider) GetActualRates(ctx context.Context, titles []string) ([]Provider, error) {
-	result := []Provider{}
+func (c *myCoin) GetActualRates(ctx context.Context, titles []string) ([]entities.Coin, error) {
+	result := []entities.Coin{}
 	for _, elem := range titles {
-		result = append(result, Provider{Titl: elem})
+		result = append(result, entities.Coin{Title: elem})
 	}
 	return result, nil
 }
