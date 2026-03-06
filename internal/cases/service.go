@@ -7,10 +7,20 @@ import (
 )
 
 type Service struct {
+	provider CryptoProvider
+	storage  Storage
 }
 
-func (s Service) GetLastRates(ctx context.Context, titles []string) ([]entities.Coin, error) { // Получить последние цены
-	return []entities.Coin{}, nil
+func NewService(provider CryptoProvider, storage Storage) (*Service, error) {
+	// if pro и str не нил
+	return nil, nil
+}
+func (s Service) GetLastRates(ctx context.Context, titles []string) ([]*entities.Coin, error) { // Получить последние цены
+	return []*entities.Coin{}, nil
+	// 1 - получить последние цены
+	// а есть ли в базе такие монеты (GetCoinsList)
+	// а потом в провайдере если их нет в базе
+	// сохраняем в базу
 }
 
 func (s Service) GetMaxRates(ctx context.Context, titles []string) ([]entities.Coin, error) { // Получить максимальные цены
