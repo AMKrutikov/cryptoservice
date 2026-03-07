@@ -1,3 +1,3 @@
 package cases_test
 
-// gomock или  mockerry
+// gomock или  Mockery
