@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AMKrutikov/cryptoservice/internal/cases/internal/mocks"
+	"github.com/AMKrutikov/cryptoservice/internal/cases/mocks"
 	"github.com/AMKrutikov/cryptoservice/internal/entities"
 	"github.com/stretchr/testify/assert"
 	// Пакеты из вашего go.mod
