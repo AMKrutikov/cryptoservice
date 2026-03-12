@@ -3,7 +3,7 @@ package cases
 import (
 	"context"
 
-	"githab.com/AMKrutikov/cryptoservice/internal/entities"
+	"github.com/AMKrutikov/cryptoservice/internal/entities"
 )
 
 type Service struct {

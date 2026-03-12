@@ -1,5 +1,5 @@
-install:
-	go install github.com/vektra/mockery/v3@v3.7.0
+# install:
+# 	go install github.com/vektra/mockery/v2@v2.53.6
 
 mock:
-	mockery
+	go generate ./...

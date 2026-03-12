@@ -3,9 +3,10 @@ package cases
 import (
 	"context"
 
-	"githab.com/AMKrutikov/cryptoservice/internal/entities"
+	"github.com/AMKrutikov/cryptoservice/internal/entities"
 )
 
+//go:generate mockery
 type Storage interface {
 	Store(ctx context.Context, coins []*entities.Coin) error                                          // положить - метод
 	GetCoinsList(ctx context.Context) ([]string, error)                                               // Список title монет, которые предст только имена
