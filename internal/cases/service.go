@@ -8,10 +8,10 @@ import (
 
 type Service struct {
 	provider CryptoProvider
-	storage  Storage
+	storage  CryptoStorage
 }
 
-func NewService(provider CryptoProvider, storage Storage) (*Service, error) {
+func NewService(provider CryptoProvider, storage CryptoStorage) (*Service, error) {
 	// if pro и str не нил
 	return nil, nil
 }

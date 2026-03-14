@@ -6,8 +6,7 @@ import (
 	"github.com/AMKrutikov/cryptoservice/internal/entities"
 )
 
-//go:generate mockery
-type Storage interface {
+type CryptoStorage interface {
 	Store(ctx context.Context, coins []*entities.Coin) error                                          // положить - метод
 	GetCoinsList(ctx context.Context) ([]string, error)                                               // Список title монет, которые предст только имена
 	GetActualCoins(ctx context.Context, titles []string) ([]*entities.Coin, error)                    // получение последних монет по title-ам
