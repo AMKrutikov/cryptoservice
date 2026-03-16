@@ -27,10 +27,10 @@ func (c *Coin) ActuaAT() time.Time {
 
 func NewCoin(title string, price float64, actualAT time.Time) (*Coin, error) {
 	if strings.TrimSpace(title) == "" {
-		return nil, errors.Wrap(ERRInvalidParam, "Title cannot be empty")
+		return nil, errors.Wrap(ErrInvalidParam, "Title cannot be empty")
 	}
 	if price <= 0 {
-		return nil, errors.Wrap(ERRInvalidParam, "Price cannot be zero or negative")
+		return nil, errors.Wrap(ErrInvalidParam, "Price cannot be zero or negative")
 	}
 	return &Coin{
 		title:    title,

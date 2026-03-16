@@ -12,15 +12,20 @@ type Service struct {
 }
 
 func NewService(provider CryptoProvider, storage CryptoStorage) (*Service, error) {
-	// if pro и str не нил
-	return nil, nil
+	if provider == nil || storage == nil {
+		return nil, entities.ErrService
+	}
+	return &Service{
+		provider: provider,
+		storage:  storage,
+	}, nil
 }
 func (s Service) GetLastRates(ctx context.Context, titles []string) ([]*entities.Coin, error) { // Получить последние цены
 	return []*entities.Coin{}, nil
 	// 1 - получить последние цены
-	// а есть ли в базе такие монеты (GetCoinsList)
-	// а потом в провайдере если их нет в базе
-	// сохраняем в базу
+	//   есть ли в базе(storage) такие монеты (GetCoinsList),
+	// - проверяем что все они есть, выводим слайс монет!
+	// - если нет запрашиваем в провайдере и сохраняем в базу!
 }
 
 func (s Service) GetMaxRates(ctx context.Context, titles []string) ([]entities.Coin, error) { // Получить максимальные цены

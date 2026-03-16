@@ -27,28 +27,28 @@ func TestNewCoin(t *testing.T) {
 			title:   "",
 			price:   100.00,
 			wantErr: true,
-			resErr:  entities.ERRInvalidParam,
+			resErr:  entities.ErrInvalidParam,
 		},
 		{
 			name:    "price zero",
 			title:   "bitcoin",
 			price:   0.00,
 			wantErr: true,
-			resErr:  entities.ERRInvalidParam,
+			resErr:  entities.ErrInvalidParam,
 		},
 		{
 			name:    "price negative",
 			title:   "bitcoin",
 			price:   -1.00,
 			wantErr: true,
-			resErr:  entities.ERRInvalidParam,
+			resErr:  entities.ErrInvalidParam,
 		},
 		{
 			name:    "title empty AND price zero or negative",
 			title:   " ",
 			price:   -1.00,
 			wantErr: true,
-			resErr:  entities.ERRInvalidParam,
+			resErr:  entities.ErrInvalidParam,
 		},
 	}
 	for _, elem := range testCases {
@@ -57,7 +57,7 @@ func TestNewCoin(t *testing.T) {
 			coin, err := entities.NewCoin(elem.title, elem.price, now)
 			if elem.wantErr {
 				require.Nil(t, coin)
-				require.ErrorIs(t, err, entities.ERRInvalidParam)
+				require.ErrorIs(t, err, entities.ErrInvalidParam)
 				return
 			}
 			require.NotNil(t, coin)

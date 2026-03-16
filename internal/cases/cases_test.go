@@ -15,7 +15,7 @@ import (
 
 func TestGetCoinsMock(t *testing.T) {
 	// CryptoProvider interface
-	expectedErr := entities.ERRStorageErr
+	expectedErr := entities.ErrProvider
 	tNow := time.Now()
 	ctx := context.Background()
 	titles := []string{"BTC", "ETH"}
@@ -53,7 +53,7 @@ func TestSavingStorageMock(t *testing.T) {
 	// CryptoStorage interface
 	ctx := context.Background()
 	tNow := time.Now()
-	expectedErr := entities.ERRStorageErr
+	expectedErr := entities.ErrStorage
 
 	coin1, err := entities.NewCoin("BTC", 1000.00, tNow)
 	require.NoError(t, err)
@@ -83,7 +83,7 @@ func TestGetCoinsNamesMock(t *testing.T) {
 	// CryptoStorage interface
 	ctx := context.Background()
 	titles := []string{"BTC", "ETH"}
-	expectedErr := entities.ERRStorageErr
+	expectedErr := entities.ErrStorage
 	t.Run("TestSuccessCoinsNames", func(t *testing.T) {
 		mockGetCoinsNames := mocks.NewCryptoStorage(t)
 
@@ -109,7 +109,7 @@ func TestGetLastCoinsMock(t *testing.T) {
 	// CryptoStorage interface
 	ctx := context.Background()
 	tNow := time.Now()
-	expectedErr := entities.ERRStorageErr
+	expectedErr := entities.ErrStorage
 
 	coin1, err := entities.NewCoin("BTC", 1000.00, tNow)
 	require.NoError(t, err)
@@ -143,7 +143,7 @@ func TestGetAggregatedRequestMock(t *testing.T) {
 	// CryptoStorage interface
 	ctx := context.Background()
 	tNow := time.Now()
-	expectedErr := entities.ERRStorageErr
+	expectedErr := entities.ErrStorage
 
 	coin1, err := entities.NewCoin("BTC", 1000.00, tNow)
 	require.NoError(t, err)

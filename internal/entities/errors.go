@@ -2,6 +2,10 @@ package entities
 
 import "github.com/pkg/errors"
 
-var ERRInvalidParam = errors.New("Invalid Param")
+var ErrInvalidParam = errors.New("Invalid Param")
 
-var ERRStorageErr = errors.New("Storage Error")
+var ErrProvider = errors.New("Provider Error")
+
+var ErrStorage = errors.New("Storage Error")
+
+var ErrService = errors.New("Storage Error")
