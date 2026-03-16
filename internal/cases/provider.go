@@ -6,7 +6,7 @@ import (
 	"github.com/AMKrutikov/cryptoservice/internal/entities"
 )
 
-//go:generate mockery
+//go:generate mockery --name CryptoProvider
 type CryptoProvider interface {
 	GetActualRates(ctx context.Context, titles []string) ([]*entities.Coin, error)
 }

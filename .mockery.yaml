@@ -1,7 +1,6 @@
-# .mockery.yaml
 with-expecter: true # Добавляет удобный типизированный интерфейс .EXPECT()
-all: true           # Искать все интерфейсы в проекте
+all: false          # Искать все интерфейсы в проекте
 recursive: true     # Искать во всех подпапках
 outpkg: mocks       # Название пакета для всех моков
-output: ./mocks # ПУТЬ, где будут лежать все моки
+output: ./mocks     # ПУТЬ, где будут лежать все моки
 case: snake         # В нижнем регистре snake_case(crypto_provider.go) - для избегания путаницы в Linux
