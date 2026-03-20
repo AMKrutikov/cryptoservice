@@ -13,18 +13,6 @@ type Coin struct {
 	actualAT time.Time
 }
 
-func (c *Coin) Title() string {
-	return c.title
-}
-
-func (c *Coin) Price() float64 {
-	return c.price
-}
-
-func (c *Coin) ActuaAT() time.Time {
-	return c.actualAT
-}
-
 func NewCoin(title string, price float64, actualAT time.Time) (*Coin, error) {
 	if strings.TrimSpace(title) == "" {
 		return nil, errors.Wrap(ErrInvalidParam, "Title cannot be empty")
@@ -37,4 +25,16 @@ func NewCoin(title string, price float64, actualAT time.Time) (*Coin, error) {
 		price:    price,
 		actualAT: actualAT,
 	}, nil
+}
+
+func (c *Coin) Title() string {
+	return c.title
+}
+
+func (c *Coin) Price() float64 {
+	return c.price
+}
+
+func (c *Coin) ActuaAT() time.Time {
+	return c.actualAT
 }

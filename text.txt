@@ -1,3 +1,3 @@
-// настроить go:generate mockery
-//cases_test.go: пишем тесты для type CryptoStorage interface аналогично CrytoProvider
-service.go: пишем конструктор func NewService, пишем реализацию метода func (s Service) GetLastRates
+ пишем реализацию методов в service.go
+ //cases_test.go: пишем тесты для service.go - cover 100%
+ исправляем ошибки(делаем wrap)

@@ -2,8 +2,11 @@ package cases
 
 import (
 	"context"
+	"slices"
+	"strings"
 
 	"github.com/AMKrutikov/cryptoservice/internal/entities"
+	"github.com/pkg/errors"
 )
 
 type Service struct {
@@ -11,9 +14,18 @@ type Service struct {
 	storage  CryptoStorage
 }
 
+var (
+	min = "min"
+	max = "max"
+	avg = "avg"
+)
+
 func NewService(provider CryptoProvider, storage CryptoStorage) (*Service, error) {
-	if provider == nil || storage == nil {
-		return nil, entities.ErrService
+	if provider == nil {
+		return nil, errors.Wrap(entities.ErrInvalidParam, "provider cannot be nil")
+	}
+	if storage == nil {
+		return nil, errors.Wrap(entities.ErrInvalidParam, "storage cannot be nil")
 	}
 	return &Service{
 		provider: provider,
@@ -22,58 +34,79 @@ func NewService(provider CryptoProvider, storage CryptoStorage) (*Service, error
 }
 
 func (s *Service) GetLastRates(ctx context.Context, titles []string) ([]*entities.Coin, error) { // Получить последние цены
-	listCoinMap := make(map[string]struct{})
-	containsAll := true
-	// запрашиваем список монет с базы (GetCoinsList) и сохраняем в переменную (storeTitles)
-	storeTitles, err := s.storage.GetCoinsList(ctx)
+	missingCoins := make([]string, 0, len(titles))
+
+	coinsStorage, err := s.storage.GetCoinsList(ctx)
 	if err != nil {
-		return nil, entities.ErrStorage
+		return nil, errors.Wrap(err, "failed to get coins list from storage")
 	}
-	// заполняем listCoinMap пока просто списком монет, которые есть в базе
-	for _, elem := range storeTitles {
-		listCoinMap[elem] = struct{}{}
-	}
-	// проверяем есть ли в базе(storage) запрашиваемые монеты(titles)
+
 	for _, elem := range titles {
-		if _, exists := listCoinMap[elem]; !exists {
-			containsAll = false
+		if !slices.Contains(coinsStorage, elem) {
+			//providerCoins, err := s.provider.GetActualRates(ctx, titles) - обновить список всех монет
+			missingCoins = append(missingCoins, elem)
 		}
 	}
-	// если есть, выводим слайс монет
-	if containsAll {
-		resultCoins, err := s.storage.GetActualCoins(ctx, titles)
+	if len(missingCoins) > 0 {
+		providerCoins, err := s.provider.GetActualRates(ctx, missingCoins)
 		if err != nil {
-			return nil, entities.ErrStorage
+			return nil, errors.Wrap(err, "failed to get actual rates from provider")
 		}
-		return resultCoins, nil
+
+		err = s.storage.Store(ctx, providerCoins)
+		if err != nil { //providerCoins, err := s.provider.GetActualRates(ctx, titles)
+			return nil, errors.Wrap(err, "failed to save coins to storage")
+		}
 	}
 
-	// если нет запрашиваем у провайдера
-	providerCoins, err := s.provider.GetActualRates(ctx, titles)
+	actualCoins, err := s.storage.GetActualCoins(ctx, titles)
 	if err != nil {
-		return nil, entities.ErrProvider
+		return nil, errors.Wrap(err, "failed to get actual rates from storage")
 	}
-	// и сохраняем в базу
-	err = s.storage.Store(ctx, providerCoins)
+	return actualCoins, nil
+}
+
+func (s *Service) GetAgregetedRates(ctx context.Context, titles []string, aggType string) ([]*entities.Coin, error) {
+	if len(titles) == 0 {
+		return nil, errors.Wrap(entities.ErrInvalidParam, "incorrect value for list of coins")
+	}
+
+	aggTypeLower := strings.ToLower(aggType)
+	if aggTypeLower != min && aggTypeLower != max && aggTypeLower != avg {
+		return nil, errors.Wrap(entities.ErrInvalidParam, "incorrect value for agregeted rates")
+	}
+
+	if _, err := s.GetLastRates(ctx, titles); err != nil {
+		return nil, errors.Wrap(err, "failed to ensure coins presence")
+	}
+
+	aggCoin, err := s.storage.GetAggregateCoins(ctx, titles, aggTypeLower)
 	if err != nil {
-		return nil, entities.ErrStorage
+		return nil, errors.Wrap(err, "failed to get aggregated coins from storage")
 	}
-	// выводим слайс монет, по запросу через провайдера! без обращения к базе.
-	return providerCoins, nil
+
+	return aggCoin, nil
 }
 
-func (s *Service) GetMaxRates(ctx context.Context, titles []string) ([]entities.Coin, error) { // Получить максимальные цены
-	return []entities.Coin{}, nil
-}
+// Получить актуальные цены Демон подгружает данные с некой периодичностью
+func (s *Service) ActualizeRates(ctx context.Context) error {
+	coinsList, err := s.storage.GetCoinsList(ctx)
+	if err != nil {
+		return errors.Wrap(err, "failed to get coins list from storage")
+	}
 
-func (s *Service) GetMinRates(ctx context.Context, titles []string) ([]entities.Coin, error) { // Получить минимальные цены
-	return []entities.Coin{}, nil
-}
+	if len(coinsList) == 0 {
+		return nil
+	}
 
-func (s *Service) GetAvgRates(ctx context.Context, titles []string) ([]entities.Coin, error) { // Получить средние цены
-	return []entities.Coin{}, nil
-}
+	updatedCoins, err := s.provider.GetActualRates(ctx, coinsList)
+	if err != nil {
+		return errors.Wrap(err, "failed to get actual rates from provider")
+	}
 
-// func (s Service) ActualizeRates(ctx context.Context, opts ...option) error {      // Получить актуальные цены
-// 	return nil                                                                       // Демон подгружает данные
-// }                                                                                 // с некой периодичностью
+	if err := s.storage.Store(ctx, updatedCoins); err != nil {
+		return errors.Wrap(err, "failed to save updated coins to storage")
+	}
+
+	return nil
+}

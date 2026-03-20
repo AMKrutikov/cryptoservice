@@ -53,6 +53,8 @@ func TestNewCoin(t *testing.T) {
 	}
 	for _, elem := range testCases {
 		t.Run(elem.name, func(t *testing.T) {
+			t.Parallel()
+
 			now := time.Now()
 			coin, err := entities.NewCoin(elem.title, elem.price, now)
 			if elem.wantErr {
