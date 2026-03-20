@@ -7,17 +7,121 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AMKrutikov/cryptoservice/internal/cases"
 	"github.com/AMKrutikov/cryptoservice/internal/cases/mocks"
 	"github.com/AMKrutikov/cryptoservice/internal/entities"
 	"github.com/stretchr/testify/require"
 )
+
+func TestNewService(t *testing.T) {
+	t.Run("CryptoProviderNilFail", func(t *testing.T) {
+		mockStorage := mocks.NewCryptoStorage(t)
+		expectedError := entities.ErrInvalidParam
+
+		_, err := cases.NewService(nil, mockStorage)
+		require.Error(t, err)
+		require.ErrorIs(t, err, expectedError)
+	})
+	t.Run("CryptoStorageNilFail", func(t *testing.T) {
+		mockProvider := mocks.NewCryptoProvider(t)
+		expectedError := entities.ErrInvalidParam
+
+		_, err := cases.NewService(mockProvider, nil)
+		require.Error(t, err)
+		require.ErrorIs(t, err, expectedError)
+	})
+	t.Run("NewServiceSuccess", func(t *testing.T) {
+		mockProvider := mocks.NewCryptoProvider(t)
+		mockStorage := mocks.NewCryptoStorage(t)
+
+		service, err := cases.NewService(mockProvider, mockStorage)
+		require.NoError(t, err)
+		require.NotNil(t, service)
+
+	})
+}
+
+func TestGetLastRates(t *testing.T) {
+	expectedErr := entities.ErrInvalidParam
+	ctx := context.Background()
+	titles := []string{"BTC", "ETH"}
+	tNow := time.Now()
+	coin1, err := entities.NewCoin("BTC", 1000.00, tNow)
+	require.NoError(t, err)
+	coin2, err := entities.NewCoin("ETH", 500.00, tNow)
+	require.NoError(t, err)
+	expectedCoins := []*entities.Coin{coin1, coin2}
+	t.Run("AllCoinsStorageSucces", func(t *testing.T) {
+		mockProvider := mocks.NewCryptoProvider(t)
+		mockStorage := mocks.NewCryptoStorage(t)
+
+		service, err := cases.NewService(mockProvider, mockStorage)
+		require.NoError(t, err)
+		require.NotNil(t, service)
+
+		mockStorage.EXPECT().GetCoinsList(ctx).Return(titles, nil)
+		mockStorage.EXPECT().GetActualCoins(ctx, titles).Return(expectedCoins, nil)
+
+		actualCoins, err := service.GetLastRates(ctx, titles)
+		require.NoError(t, err)
+		require.Equal(t, expectedCoins, actualCoins)
+	})
+
+	t.Run("AllCoinsProviderSucces", func(t *testing.T) {
+		mockProvider := mocks.NewCryptoProvider(t)
+		mockStorage := mocks.NewCryptoStorage(t)
+
+		service, err := cases.NewService(mockProvider, mockStorage)
+		require.NoError(t, err)
+		require.NotNil(t, service)
+
+		mockStorage.EXPECT().GetCoinsList(ctx).Return([]string{}, nil)
+		mockProvider.EXPECT().GetActualRates(ctx, titles).Return(expectedCoins, nil)
+		mockStorage.EXPECT().Store(ctx, expectedCoins).Return(nil)
+		mockStorage.EXPECT().GetActualCoins(ctx, titles).Return(expectedCoins, nil)
+
+		actualCoins, err := service.GetLastRates(ctx, titles)
+		require.NoError(t, err)
+		require.Equal(t, expectedCoins, actualCoins)
+	})
+	t.Run("FailStorage", func(t *testing.T) {
+		mockProvider := mocks.NewCryptoProvider(t)
+		mockStorage := mocks.NewCryptoStorage(t)
+
+		service, err := cases.NewService(mockProvider, mockStorage)
+		require.NoError(t, err)
+		require.NotNil(t, service)
+
+		mockStorage.EXPECT().GetCoinsList(ctx).Return([]string{}, nil)
+		mockProvider.EXPECT().GetActualRates(ctx, titles).Return(expectedCoins, nil)
+		mockStorage.EXPECT().Store(ctx, expectedCoins).Return(expectedErr)
+
+		_, err = service.GetLastRates(ctx, titles)
+		require.Error(t, err)
+		require.ErrorIs(t, err, expectedErr)
+	})
+	t.Run("FailProvider", func(t *testing.T) {
+		mockProvider := mocks.NewCryptoProvider(t)
+		mockStorage := mocks.NewCryptoStorage(t)
+
+		service, err := cases.NewService(mockProvider, mockStorage)
+		require.NoError(t, err)
+		require.NotNil(t, service)
+
+		mockStorage.EXPECT().GetCoinsList(ctx).Return([]string{}, nil)
+		mockProvider.EXPECT().GetActualRates(ctx, titles).Return(nil, expectedErr)
+
+		_, err = service.GetLastRates(ctx, titles)
+		require.Error(t, err)
+		require.ErrorIs(t, err, expectedErr)
+	})
+}
 
 func TestCryptoProvider(t *testing.T) {
 	expectedErr := entities.ErrInvalidParam
 	tNow := time.Now()
 	ctx := context.Background()
 	titles := []string{"BTC", "ETH"}
-
 	coin1, err := entities.NewCoin("BTC", 1000.00, tNow)
 	require.NoError(t, err)
 	coin2, err := entities.NewCoin("ETH", 500.00, tNow)
