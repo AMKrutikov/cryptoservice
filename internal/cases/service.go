@@ -36,6 +36,10 @@ func NewService(provider CryptoProvider, storage CryptoStorage) (*Service, error
 func (s *Service) GetLastRates(ctx context.Context, titles []string) ([]*entities.Coin, error) { // Получить последние цены
 	missingCoins := make([]string, 0, len(titles))
 
+	if len(titles) == 0 {
+		return nil, errors.Wrap(entities.ErrInvalidParam, "empty titles")
+	}
+
 	coinsStorage, err := s.storage.GetCoinsList(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get coins list from storage")

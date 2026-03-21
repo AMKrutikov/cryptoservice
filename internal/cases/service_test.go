@@ -51,7 +51,20 @@ func TestGetLastRates(t *testing.T) {
 	coin2, err := entities.NewCoin("ETH", 500.00, tNow)
 	require.NoError(t, err)
 	expectedCoins := []*entities.Coin{coin1, coin2}
-	t.Run("AllCoinsStorageSucces", func(t *testing.T) {
+	t.Run("FailLenTitles", func(t *testing.T) {
+		mockProvider := mocks.NewCryptoProvider(t)
+		mockStorage := mocks.NewCryptoStorage(t)
+
+		service, err := cases.NewService(mockProvider, mockStorage)
+		require.NoError(t, err)
+		require.NotNil(t, service)
+
+		_, err = service.GetLastRates(ctx, []string{})
+		require.Error(t, err)
+		require.ErrorIs(t, err, expectedErr)
+
+	})
+	t.Run("AllCoinsStorageSuccess", func(t *testing.T) {
 		mockProvider := mocks.NewCryptoProvider(t)
 		mockStorage := mocks.NewCryptoStorage(t)
 
@@ -67,7 +80,7 @@ func TestGetLastRates(t *testing.T) {
 		require.Equal(t, expectedCoins, actualCoins)
 	})
 
-	t.Run("AllCoinsProviderSucces", func(t *testing.T) {
+	t.Run("AllCoinsProviderSuccess", func(t *testing.T) {
 		mockProvider := mocks.NewCryptoProvider(t)
 		mockStorage := mocks.NewCryptoStorage(t)
 
@@ -83,6 +96,35 @@ func TestGetLastRates(t *testing.T) {
 		actualCoins, err := service.GetLastRates(ctx, titles)
 		require.NoError(t, err)
 		require.Equal(t, expectedCoins, actualCoins)
+	})
+	t.Run("FailGetCoinsList", func(t *testing.T) {
+		mockProvider := mocks.NewCryptoProvider(t)
+		mockStorage := mocks.NewCryptoStorage(t)
+
+		service, err := cases.NewService(mockProvider, mockStorage)
+		require.NoError(t, err)
+		require.NotNil(t, service)
+
+		mockStorage.EXPECT().GetCoinsList(ctx).Return([]string{}, expectedErr)
+
+		_, err = service.GetLastRates(ctx, titles)
+		require.Error(t, err)
+		require.ErrorIs(t, err, expectedErr)
+	})
+	t.Run("FailGetActualCoins", func(t *testing.T) {
+		mockProvider := mocks.NewCryptoProvider(t)
+		mockStorage := mocks.NewCryptoStorage(t)
+
+		service, err := cases.NewService(mockProvider, mockStorage)
+		require.NoError(t, err)
+		require.NotNil(t, service)
+
+		mockStorage.EXPECT().GetCoinsList(ctx).Return(titles, nil)
+		mockStorage.EXPECT().GetActualCoins(ctx, titles).Return(nil, expectedErr)
+
+		_, err = service.GetLastRates(ctx, titles)
+		require.Error(t, err)
+		require.ErrorIs(t, err, expectedErr)
 	})
 	t.Run("FailStorage", func(t *testing.T) {
 		mockProvider := mocks.NewCryptoProvider(t)
@@ -100,6 +142,7 @@ func TestGetLastRates(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorIs(t, err, expectedErr)
 	})
+
 	t.Run("FailProvider", func(t *testing.T) {
 		mockProvider := mocks.NewCryptoProvider(t)
 		mockStorage := mocks.NewCryptoStorage(t)
@@ -117,35 +160,192 @@ func TestGetLastRates(t *testing.T) {
 	})
 }
 
-func TestCryptoProvider(t *testing.T) {
+func TestGetAgregetedRates(t *testing.T) {
 	expectedErr := entities.ErrInvalidParam
-	tNow := time.Now()
 	ctx := context.Background()
 	titles := []string{"BTC", "ETH"}
+	tNow := time.Now()
 	coin1, err := entities.NewCoin("BTC", 1000.00, tNow)
 	require.NoError(t, err)
 	coin2, err := entities.NewCoin("ETH", 500.00, tNow)
 	require.NoError(t, err)
 	expectedCoins := []*entities.Coin{coin1, coin2}
-	t.Run("TestSuccessCryptoProvider", func(t *testing.T) {
-		mockCryptoProvider := mocks.NewCryptoProvider(t)
+	avg := "avg"
+	invalidAgg := "invalidAgg"
+	t.Run("FailLenTitles", func(t *testing.T) {
+		mockProvider := mocks.NewCryptoProvider(t)
+		mockStorage := mocks.NewCryptoStorage(t)
 
-		mockCryptoProvider.EXPECT().GetActualRates(ctx, titles).
-			Return(expectedCoins, nil)
+		service, err := cases.NewService(mockProvider, mockStorage)
+		require.NoError(t, err)
+		require.NotNil(t, service)
 
-		actualCoins, err := mockCryptoProvider.GetActualRates(ctx, titles)
+		_, err = service.GetAgregetedRates(ctx, []string{}, avg)
+		require.Error(t, err)
+		require.ErrorIs(t, err, expectedErr)
+
+	})
+	t.Run("FailInvalidAggTypeLower", func(t *testing.T) {
+		mockProvider := mocks.NewCryptoProvider(t)
+		mockStorage := mocks.NewCryptoStorage(t)
+
+		service, err := cases.NewService(mockProvider, mockStorage)
+		require.NoError(t, err)
+		require.NotNil(t, service)
+
+		_, err = service.GetAgregetedRates(ctx, titles, invalidAgg)
+		require.Error(t, err)
+		require.ErrorIs(t, err, expectedErr)
+
+	})
+	t.Run("FailGetLastRates", func(t *testing.T) {
+		mockProvider := mocks.NewCryptoProvider(t)
+		mockStorage := mocks.NewCryptoStorage(t)
+
+		service, err := cases.NewService(mockProvider, mockStorage)
+		require.NoError(t, err)
+		require.NotNil(t, service)
+
+		mockStorage.EXPECT().GetCoinsList(ctx).Return([]string{}, expectedErr)
+
+		_, err = service.GetAgregetedRates(ctx, titles, avg)
+		require.Error(t, err)
+		require.ErrorIs(t, err, expectedErr)
+
+	})
+	t.Run("FailGetAggregateCoins", func(t *testing.T) {
+		mockProvider := mocks.NewCryptoProvider(t)
+		mockStorage := mocks.NewCryptoStorage(t)
+
+		service, err := cases.NewService(mockProvider, mockStorage)
+		require.NoError(t, err)
+		require.NotNil(t, service)
+
+		mockStorage.EXPECT().GetCoinsList(ctx).Return(titles, nil)
+		mockStorage.EXPECT().GetActualCoins(ctx, titles).Return(expectedCoins, nil)
+		mockStorage.EXPECT().GetAggregateCoins(ctx, titles, avg).Return(nil, expectedErr)
+		_, err = service.GetAgregetedRates(ctx, titles, avg)
+		require.Error(t, err)
+		require.ErrorIs(t, err, expectedErr)
+	})
+	t.Run("FailGetAggregateCoins", func(t *testing.T) {
+		mockProvider := mocks.NewCryptoProvider(t)
+		mockStorage := mocks.NewCryptoStorage(t)
+
+		service, err := cases.NewService(mockProvider, mockStorage)
+		require.NoError(t, err)
+		require.NotNil(t, service)
+
+		mockStorage.EXPECT().GetCoinsList(ctx).Return(titles, nil)
+		mockStorage.EXPECT().GetActualCoins(ctx, titles).Return(expectedCoins, nil)
+		mockStorage.EXPECT().GetAggregateCoins(ctx, titles, avg).Return(nil, expectedErr)
+
+		_, err = service.GetAgregetedRates(ctx, titles, avg)
+		require.Error(t, err)
+		require.ErrorIs(t, err, expectedErr)
+	})
+	t.Run("SuccessGetAggregateCoins", func(t *testing.T) {
+		mockProvider := mocks.NewCryptoProvider(t)
+		mockStorage := mocks.NewCryptoStorage(t)
+
+		service, err := cases.NewService(mockProvider, mockStorage)
+		require.NoError(t, err)
+		require.NotNil(t, service)
+
+		mockStorage.EXPECT().GetCoinsList(ctx).Return(titles, nil)
+		mockStorage.EXPECT().GetActualCoins(ctx, titles).Return(expectedCoins, nil)
+		mockStorage.EXPECT().GetAggregateCoins(ctx, titles, avg).Return(expectedCoins, nil)
+
+		actualCoins, err := service.GetAgregetedRates(ctx, titles, avg)
 		require.NoError(t, err)
 		require.Equal(t, expectedCoins, actualCoins)
 	})
-	t.Run("TestFailCryptoProvider", func(t *testing.T) {
-		mockCryptoProvider := mocks.NewCryptoProvider(t)
+}
 
-		mockCryptoProvider.EXPECT().GetActualRates(ctx, titles).
-			Return(nil, expectedErr)
+func TestActualizeRates(t *testing.T) {
+	expectedErr := entities.ErrInvalidParam
+	ctx := context.Background()
+	titles := []string{"BTC", "ETH"}
+	tNow := time.Now()
+	coin1, err := entities.NewCoin("BTC", 1000.00, tNow)
+	require.NoError(t, err)
+	coin2, err := entities.NewCoin("ETH", 500.00, tNow)
+	require.NoError(t, err)
+	expectedCoins := []*entities.Coin{coin1, coin2}
+	t.Run("FailGetCoinsList", func(t *testing.T) {
+		mockProvider := mocks.NewCryptoProvider(t)
+		mockStorage := mocks.NewCryptoStorage(t)
 
-		_, err := mockCryptoProvider.GetActualRates(ctx, titles)
+		service, err := cases.NewService(mockProvider, mockStorage)
+		require.NoError(t, err)
+		require.NotNil(t, service)
+
+		mockStorage.EXPECT().GetCoinsList(ctx).Return([]string{}, expectedErr)
+
+		err = service.ActualizeRates(ctx)
 		require.Error(t, err)
 		require.ErrorIs(t, err, expectedErr)
+	})
+	t.Run("LenCoinsListEmpty", func(t *testing.T) {
+		mockProvider := mocks.NewCryptoProvider(t)
+		mockStorage := mocks.NewCryptoStorage(t)
+
+		service, err := cases.NewService(mockProvider, mockStorage)
+		require.NoError(t, err)
+		require.NotNil(t, service)
+
+		mockStorage.EXPECT().GetCoinsList(ctx).Return([]string{}, nil)
+
+		err = service.ActualizeRates(ctx)
+		require.NoError(t, err)
+		require.Nil(t, err)
+	})
+	t.Run("FailGetActualRates", func(t *testing.T) {
+		mockProvider := mocks.NewCryptoProvider(t)
+		mockStorage := mocks.NewCryptoStorage(t)
+
+		service, err := cases.NewService(mockProvider, mockStorage)
+		require.NoError(t, err)
+		require.NotNil(t, service)
+
+		mockStorage.EXPECT().GetCoinsList(ctx).Return(titles, nil)
+		mockProvider.EXPECT().GetActualRates(ctx, titles).Return(nil, expectedErr)
+
+		err = service.ActualizeRates(ctx)
+		require.Error(t, err)
+		require.ErrorIs(t, err, expectedErr)
+	})
+	t.Run("FailStore", func(t *testing.T) {
+		mockProvider := mocks.NewCryptoProvider(t)
+		mockStorage := mocks.NewCryptoStorage(t)
+
+		service, err := cases.NewService(mockProvider, mockStorage)
+		require.NoError(t, err)
+		require.NotNil(t, service)
+
+		mockStorage.EXPECT().GetCoinsList(ctx).Return(titles, nil)
+		mockProvider.EXPECT().GetActualRates(ctx, titles).Return(expectedCoins, nil)
+		mockStorage.EXPECT().Store(ctx, expectedCoins).Return(expectedErr)
+
+		err = service.ActualizeRates(ctx)
+		require.Error(t, err)
+		require.ErrorIs(t, err, expectedErr)
+	})
+	t.Run("SuccessActualizeRates", func(t *testing.T) {
+		mockProvider := mocks.NewCryptoProvider(t)
+		mockStorage := mocks.NewCryptoStorage(t)
+
+		service, err := cases.NewService(mockProvider, mockStorage)
+		require.NoError(t, err)
+		require.NotNil(t, service)
+
+		mockStorage.EXPECT().GetCoinsList(ctx).Return(titles, nil)
+		mockProvider.EXPECT().GetActualRates(ctx, titles).Return(expectedCoins, nil)
+		mockStorage.EXPECT().Store(ctx, expectedCoins).Return(nil)
+
+		err = service.ActualizeRates(ctx)
+		require.NoError(t, err)
+		require.Nil(t, err)
 	})
 }
 
