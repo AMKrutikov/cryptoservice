@@ -2,7 +2,7 @@
  cases_test.go: пишем тесты для service.go - cover 100%
  исправляем ошибки(делаем wrap)
 
- cryptocompare
+ cryptocompare.go
  client.go
  найти сайт с api с запросом по titles и получение текущих цен(usd, rub и т.д.)
   client.go 
