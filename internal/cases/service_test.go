@@ -1,6 +1,5 @@
 package cases_test
 
-// gomock или  Mockery
 
 import (
 	"context"
@@ -188,13 +187,12 @@ func TestGetAgregetedRates(t *testing.T) {
 	t.Run("FailInvalidAggTypeLower", func(t *testing.T) {
 		mockProvider := mocks.NewCryptoProvider(t)
 		mockStorage := mocks.NewCryptoStorage(t)
-		// processing
+	
 		service, err := cases.NewService(mockProvider, mockStorage)
 		require.NoError(t, err)
 		require.NotNil(t, service)
 
 		mockStorage.EXPECT().GetCoinsList(ctx).Return(titles, nil)
-		// добавить моки
 
 		_, err = service.GetAgregetedRates(ctx, titles, invalidAgg)
 		require.Error(t, err)
