@@ -1,6 +1,6 @@
- пишем реализацию методов в service.go
- cases_test.go: пишем тесты для service.go - cover 100%
- исправляем ошибки(делаем wrap)
+// пишем реализацию методов в service.go
+// cases_test.go: пишем тесты для service.go - cover 100%
+// исправляем ошибки(делаем wrap)
 
  cryptocompare.go
  client.go
