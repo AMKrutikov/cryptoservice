@@ -2,4 +2,6 @@ package entities
 
 import "github.com/pkg/errors"
 
-var ERRInvalidParam = errors.New("Invalid Param")
+var (
+	ErrInvalidParam = errors.New("Invalid Param")
+)

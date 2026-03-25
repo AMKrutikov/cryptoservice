@@ -2,39 +2,118 @@ package cases
 
 import (
 	"context"
+	"slices"
+	"strings"
 
-	"githab.com/AMKrutikov/cryptoservice/internal/entities"
+	"github.com/AMKrutikov/cryptoservice/internal/entities"
+	"github.com/pkg/errors"
 )
 
 type Service struct {
 	provider CryptoProvider
-	storage  Storage
+	storage  CryptoStorage
 }
 
-func NewService(provider CryptoProvider, storage Storage) (*Service, error) {
-	// if pro и str не нил
-	return nil, nil
-}
-func (s Service) GetLastRates(ctx context.Context, titles []string) ([]*entities.Coin, error) { // Получить последние цены
-	return []*entities.Coin{}, nil
-	// 1 - получить последние цены
-	// а есть ли в базе такие монеты (GetCoinsList)
-	// а потом в провайдере если их нет в базе
-	// сохраняем в базу
+var (
+	min = "min"
+	max = "max"
+	avg = "avg"
+)
+
+func NewService(provider CryptoProvider, storage CryptoStorage) (*Service, error) {
+	if provider == nil {
+		return nil, errors.Wrap(entities.ErrInvalidParam, "provider cannot be nil")
+	}
+	if storage == nil {
+		return nil, errors.Wrap(entities.ErrInvalidParam, "storage cannot be nil")
+	}
+	return &Service{
+		provider: provider,
+		storage:  storage,
+	}, nil
 }
 
-func (s Service) GetMaxRates(ctx context.Context, titles []string) ([]entities.Coin, error) { // Получить максимальные цены
-	return []entities.Coin{}, nil
+func (s *Service) GetLastRates(ctx context.Context, titles []string) ([]*entities.Coin, error) { // Получить последние цены
+	if err := s.processCoins(ctx, titles); err != nil {
+		return nil, errors.Wrap(err, "failed to process coins")
+	}
+
+	actualCoins, err := s.storage.GetActualCoins(ctx, titles)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get actual rates from storage")
+	}
+	return actualCoins, nil
 }
 
-func (s Service) GetMinRates(ctx context.Context, titles []string) ([]entities.Coin, error) { // Получить минимальные цены
-	return []entities.Coin{}, nil
+func (s *Service) GetAgregetedRates(ctx context.Context, titles []string, aggType string) ([]*entities.Coin, error) {
+	if err := s.processCoins(ctx, titles); err != nil {
+		return nil, errors.Wrap(err, "failed to process coins")
+	}
+
+	aggTypeLower := strings.ToLower(aggType)
+	if aggTypeLower != min && aggTypeLower != max && aggTypeLower != avg {
+		return nil, errors.Wrap(entities.ErrInvalidParam, "incorrect value for agregeted rates")
+	}
+
+	aggCoin, err := s.storage.GetAggregateCoins(ctx, titles, aggTypeLower)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get aggregated coins from storage")
+	}
+
+	return aggCoin, nil
 }
 
-func (s Service) GetAvgRates(ctx context.Context, titles []string) ([]entities.Coin, error) { // Получить средние цены
-	return []entities.Coin{}, nil
+func (s *Service) ActualizeRates(ctx context.Context) error {
+	coinsList, err := s.storage.GetCoinsList(ctx)
+	if err != nil {
+		return errors.Wrap(err, "failed to get coins list from storage")
+	}
+
+	if len(coinsList) == 0 {
+		return nil
+	}
+
+	updatedCoins, err := s.provider.GetActualRates(ctx, coinsList)
+	if err != nil {
+		return errors.Wrap(err, "failed to get actual rates from provider")
+	}
+
+	if err := s.storage.Store(ctx, updatedCoins); err != nil {
+		return errors.Wrap(err, "failed to save updated coins to storage")
+	}
+
+	return nil
 }
 
-// func (s Service) ActualizeRates(ctx context.Context, opts ...option) error {      // Получить актуальные цены
-// 	return nil                                                                       // Демон подгружает данные
-// }                                                                                 // с некой периодичностью
+func (s *Service) processCoins(ctx context.Context, titles []string) error {
+	missingCoins := make([]string, 0, len(titles))
+
+	if len(titles) == 0 {
+		return errors.Wrap(entities.ErrInvalidParam, "empty titles")
+	}
+
+	coinsStorage, err := s.storage.GetCoinsList(ctx)
+	if err != nil {
+		return errors.Wrap(err, "failed to get coins list from storage")
+	}
+
+	for _, elem := range titles {
+		if !slices.Contains(coinsStorage, elem) {
+			missingCoins = append(missingCoins, elem)
+		}
+	}
+	if len(missingCoins) == 0 {
+		return nil
+	}
+	providerCoins, err := s.provider.GetActualRates(ctx, missingCoins)
+	if err != nil {
+		return errors.Wrap(err, "failed to get actual rates from provider")
+	}
+
+	err = s.storage.Store(ctx, providerCoins)
+	if err != nil {
+		return errors.Wrap(err, "failed to save coins to storage")
+	}
+	return nil
+
+}
