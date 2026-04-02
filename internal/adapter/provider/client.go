@@ -12,19 +12,24 @@ import (
 	"github.com/pkg/errors"
 )
 
-// type Client struct {
-// 	*http.Client
-// }
+// Любая функция, которая принимает на вход указатель на нашу структуру *client и ничего не возвращает,
+// подходит под это описание
+type Option func(*client)
 
-type coinGeckoClient struct {
+func WithTimeout(t time.Duration) Option {
+	return func(c *client) {
+		c.httpClient.Timeout = t
+	}
+}
+
+type client struct {
 	apiAuthorization string //apiAuthorization := "x-cg-demo-api-key"
 	apiKey           string //apiKey := "CG-SdGMn7C5Rv2F4hTMwLdJ1Pk6"
 	vs_currencies    string // usd
-	client           *http.Client
-	//client           *http.Client
+	httpClient       *http.Client
 }
 
-func NewProviderClient(apiAuthorization string, apiKey string, vs_currencies string) (*coinGeckoClient, error) {
+func NewProviderClient(apiAuthorization string, apiKey string, vs_currencies string, opts ...Option) (*client, error) {
 	if strings.TrimSpace(apiAuthorization) == "" {
 		return nil, errors.Wrap(entities.ErrInvalidParam, "apiAuthorization cannot be empty")
 	}
@@ -34,15 +39,22 @@ func NewProviderClient(apiAuthorization string, apiKey string, vs_currencies str
 	if strings.TrimSpace(vs_currencies) == "" {
 		return nil, errors.Wrap(entities.ErrInvalidParam, "vs_currencies cannot be empty")
 	}
-	return &coinGeckoClient{
+	c := &client{
 		apiAuthorization: apiAuthorization,
 		apiKey:           apiKey,
 		vs_currencies:    strings.ToLower(vs_currencies),
-		//client:           client,
-	}, nil
+		httpClient:       &http.Client{Timeout: time.Second * 10},
+	}
+
+	for _, opt := range opts {
+		opt(c)
+	}
+
+	return c, nil
+
 }
 
-func (с *coinGeckoClient) GetActualRates(ctx context.Context, titles []string) ([]*entities.Coin, error) {
+func (c *client) GetActualRates(ctx context.Context, titles []string) ([]*entities.Coin, error) {
 	///
 	if len(titles) == 0 {
 		return nil, errors.Wrap(entities.ErrInvalidParam, "empty titles")
@@ -53,18 +65,18 @@ func (с *coinGeckoClient) GetActualRates(ctx context.Context, titles []string) 
 		qureyTitles[idx] = strings.ToLower(elem)
 	}
 
-	url := buildUrl(qureyTitles, с.vs_currencies)
+	url := buildUrl(qureyTitles, c.vs_currencies)
 
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, errors.Wrapf(entities.ErrInternal, "request error: %v", err)
 	}
-	request.Header.Add(с.apiAuthorization, с.apiKey)
+	request.Header.Add(c.apiAuthorization, c.apiKey)
 	///
 
-	response, err := http.DefaultClient.Do(request) // создать в конструкторе , добавить паттерн функциональные опции для конфигурирования таймаута клиента
-	//response, err := c.
+	//response, err := http.DefaultClient.Do(request) // создать в конструкторе , добавить паттерн функциональные опции для конфигурирования таймаута клиента
 
+	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, errors.Wrap(entities.ErrInternal, "response error")
 	}
@@ -83,7 +95,7 @@ func (с *coinGeckoClient) GetActualRates(ctx context.Context, titles []string) 
 	resultCoins := make([]*entities.Coin, 0, len(titles))
 	tmNow := time.Now()
 	for title, elem := range parsedResponse {
-		if price, ok := elem[с.vs_currencies]; ok {
+		if price, ok := elem[c.vs_currencies]; ok {
 			if coin, err := entities.NewCoin(title, price, tmNow); err == nil {
 				resultCoins = append(resultCoins, coin)
 			}
@@ -99,3 +111,37 @@ func buildUrl(titles []string, vs_currencies string) string {
 	url := fmt.Sprintf("https://api.coingecko.com/api/v3/simple/price?vs_currencies=%s&ids=%s", vs_currencies, coins)
 	return url
 }
+
+// func (c *client) prepareRequest(ctx context.Context, titles []string) (*http.Request, error) {
+// 	baseURL := "sacs"
+// 	priceMultiPath := "jkj"
+// 	// slog.Info("prepareRequest")
+// 	// ctx, span, cancel := tracer.Start(ctx, "prepareRequest adapter provider")
+// 	// defer cancel()
+// 	url, _ := url.Parse(fmt.Sprintf("%s%s", baseURL, priceMultiPath))
+// 	query := url.Query()
+// 	query.Set()
+
+// 	// url, err := url.Parse(fmt.Sprintf("%s%s", baseURL, priceMultiPath))
+// 	// if err != nil {
+// 	// 	err := errors.Wrap(entities.ErrInternal, "url parse")
+// 	// 	span.SetError(err)
+// 	// 	slog.Error("Parse", "err", err)
+// 	// 	return nil, err
+// 	// }
+
+// 	// query := url.Query()
+// 	// query.Set(queryFsyms, strings.Join(titles, ","))
+// 	// query.Set(queryTsyms, c.costIn)
+// 	// url.RawQuery = query.Encode()
+
+// 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url.String(), nil)
+// 	if err != nil {
+// 		err := errors.Wrap(entities.ErrInternal, "new request with context")
+// 		span.SetError(err)
+// 		slog.Error("NewRequestWithContext", "err", err)
+// 		return nil, err
+// 	}
+
+// 	return request, nil
+// }

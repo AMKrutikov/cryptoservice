@@ -2,12 +2,13 @@
 CG-SdGMn7C5Rv2F4hTMwLdJ1Pk6
 https://api.coingecko.com/api/v3/search
 
- //cryptocompare.go
  client.go
  
- найти сайт с api с запросом по titles и получение текущих цен(usd, rub и т.д.) 
- - также можно учесть и если нужно получить все монеты 
- написать httpclient - adapter для этого сайта который будет имплементировать метод GetActualRates
+// добавить паттерн функциональные опции для конфигурирования таймаута клиента
+ net/url
+ docker
+ adapter storage??
+
  
 
 
