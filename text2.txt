@@ -1,0 +1,175 @@
+package cryptocompare
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"log/slog"
+	"net/http"
+	"net/url"
+	"strings"
+	"time"
+
+	"github.com/pkg/errors"
+
+	"cryptorates/coin/internal/entities"
+	"cryptorates/tools/tracing/tracer"
+)
+
+const (
+	defaultCostIn = "USD"
+
+	baseURL        = "https://min-api.cryptocompare.com"
+	priceMultiPath = "/data/pricemulti"
+
+	queryFsyms = "fsyms"
+	queryTsyms = "tsyms"
+)
+
+type Client struct {
+	*http.Client
+	costIn string
+}
+
+type ClientOption func(*Client)
+
+func WithCustomCostIn(costIn string) ClientOption {
+	return func(c *Client) {
+		c.costIn = costIn
+	}
+}
+
+func WithCustomTimeOut(timeout time.Duration) ClientOption {
+	return func(c *Client) {
+		c.Timeout = timeout
+	}
+}
+
+func (c *Client) setOpts(opts ...ClientOption) {
+	for _, opt := range opts {
+		opt(c)
+	}
+}
+
+func NewClient(opts ...ClientOption) (*Client, error) {
+	c := &Client{
+		costIn: defaultCostIn,
+		Client: &http.Client{},
+	}
+
+	c.setOpts(opts...)
+
+	if c.costIn == "" {
+		return nil, errors.Wrap(entities.ErrInvalidParam, "costIn not set")
+	}
+	return c, nil
+}
+
+func (c *Client) GetActualRates(ctx context.Context, titles []string) ([]*entities.Coin, error) {
+	slog.Info("GetActualRates")
+	ctx, span, cancel := tracer.Start(ctx, "GetActualRates adapter provider")
+	defer cancel()
+
+	request, err := c.prepareRequest(ctx, titles)
+	if err != nil {
+		err := errors.Wrap(err, "prepare request")
+		span.SetError(err)
+		slog.Error("prepareRequest", "err", err)
+		return nil, err
+	}
+
+	response, err := c.Do(request)
+	if err != nil {
+		err := errors.Wrap(entities.ErrInternal, "client do")
+		span.SetError(err)
+		slog.Error("Do", "err", err)
+		return nil, err
+	}
+
+	defer response.Body.Close() //nolint:errcheck //skip
+
+	if response.StatusCode != http.StatusOK {
+		return nil, c.processStatusCode(response)
+	}
+
+	coins, err := c.processResponse(response)
+	if err != nil {
+		err := errors.Wrap(err, "process response")
+		span.SetError(err)
+		slog.Error("processResponse", "err", err)
+		return nil, err
+	}
+
+	return coins, nil
+}
+
+func (c *Client) prepareRequest(ctx context.Context, titles []string) (*http.Request, error) {
+	slog.Info("prepareRequest")
+	ctx, span, cancel := tracer.Start(ctx, "prepareRequest adapter provider")
+	defer cancel()
+	
+	url, err := url.Parse(fmt.Sprintf("%s%s", baseURL, priceMultiPath))
+	if err != nil {
+		err := errors.Wrap(entities.ErrInternal, "url parse")
+		span.SetError(err)
+		slog.Error("Parse", "err", err)
+		return nil, err
+	}
+
+	query := url.Query()
+	query.Set(queryFsyms, strings.Join(titles, ","))
+	query.Set(queryTsyms, c.costIn)
+	url.RawQuery = query.Encode()
+
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url.String(), nil)
+	if err != nil {
+		err := errors.Wrap(entities.ErrInternal, "new request with context")
+		span.SetError(err)
+		slog.Error("NewRequestWithContext", "err", err)
+		return nil, err
+	}
+
+	return request, nil
+}
+
+func (c *Client) processResponse(response *http.Response) ([]*entities.Coin, error) {
+	var respMap map[string]map[string]float64
+
+	if err := json.NewDecoder(response.Body).Decode(&respMap); err != nil {
+		err := errors.Wrap(entities.ErrInternal, "json decode")
+		slog.Error("Decode", "err", err)
+		return nil, err
+	}
+
+	coins := make([]*entities.Coin, 0)
+	if len(respMap) == 0 {
+		err := errors.Wrap(entities.ErrNotFound, "result not contained data")
+		slog.Error("processing result", "err", err)
+		return nil, err
+	}
+	for title, costMap := range respMap {
+		coin, err := entities.NewCoin(title, costMap[c.costIn])
+		if err != nil {
+			err := errors.Wrap(err, "new coin from response")
+			slog.Error("NewCoin", "err", err)
+			return nil, err
+		}
+		coins = append(coins, coin)
+	}
+
+	return coins, nil
+}
+
+func (c *Client) processStatusCode(response *http.Response) error {
+	var respErr error
+	switch response.StatusCode {
+	case http.StatusBadRequest:
+		respErr = entities.ErrInvalidParam
+	case http.StatusNotFound:
+		respErr = entities.ErrNotFound
+	default:
+		respErr = entities.ErrInternal
+	}
+
+	return errors.Wrap(respErr, "response status code")
+}
