@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -12,15 +13,13 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Любая функция, которая принимает на вход указатель на нашу структуру *client и ничего не возвращает,
-// подходит под это описание
-type Option func(*client)
+const (
+	baseURL        = "https://pro-api.coingecko.com/api/v3"
+	priceMultiPath = "/simple/price"
 
-func WithTimeout(t time.Duration) Option {
-	return func(c *client) {
-		c.httpClient.Timeout = t
-	}
-}
+	queryVs_currencies = "vs_currencies"
+	queryIds           = "ids"
+)
 
 type client struct {
 	apiAuthorization string //apiAuthorization := "x-cg-demo-api-key"
@@ -29,20 +28,33 @@ type client struct {
 	httpClient       *http.Client
 }
 
-func NewProviderClient(apiAuthorization string, apiKey string, vs_currencies string, opts ...Option) (*client, error) {
+type Option func(c *client)
+
+func WithTimeout(timeout time.Duration) Option {
+	return func(c *client) {
+		c.httpClient.Timeout = timeout
+	}
+}
+
+func WithCurrencies(vs_currencies string) Option {
+	return func(c *client) {
+		if strings.TrimSpace(vs_currencies) != "" {
+			c.vs_currencies = vs_currencies
+		}
+	}
+}
+
+func NewProviderClient(apiAuthorization string, apiKey string, opts ...Option) (*client, error) {
 	if strings.TrimSpace(apiAuthorization) == "" {
 		return nil, errors.Wrap(entities.ErrInvalidParam, "apiAuthorization cannot be empty")
 	}
 	if strings.TrimSpace(apiKey) == "" {
 		return nil, errors.Wrap(entities.ErrInvalidParam, "apiKey cannot be empty")
 	}
-	if strings.TrimSpace(vs_currencies) == "" {
-		return nil, errors.Wrap(entities.ErrInvalidParam, "vs_currencies cannot be empty")
-	}
 	c := &client{
 		apiAuthorization: apiAuthorization,
 		apiKey:           apiKey,
-		vs_currencies:    strings.ToLower(vs_currencies),
+		vs_currencies:    "usd",
 		httpClient:       &http.Client{Timeout: time.Second * 10},
 	}
 
@@ -74,8 +86,6 @@ func (c *client) GetActualRates(ctx context.Context, titles []string) ([]*entiti
 	request.Header.Add(c.apiAuthorization, c.apiKey)
 	///
 
-	//response, err := http.DefaultClient.Do(request) // создать в конструкторе , добавить паттерн функциональные опции для конфигурирования таймаута клиента
-
 	response, err := c.httpClient.Do(request)
 	if err != nil {
 		return nil, errors.Wrap(entities.ErrInternal, "response error")
@@ -106,10 +116,18 @@ func (c *client) GetActualRates(ctx context.Context, titles []string) ([]*entiti
 }
 
 func buildUrl(titles []string, vs_currencies string) string {
+	// url := "https://api.coingecko.com/api/v3/simple/price?vs_currencies=usd&ids=bitcoin%2Cethereum%2Ctron"
 
-	coins := strings.Join(titles, "%2C")
-	url := fmt.Sprintf("https://api.coingecko.com/api/v3/simple/price?vs_currencies=%s&ids=%s", vs_currencies, coins)
-	return url
+	url, err := url.Parse(fmt.Sprintf("%s%s", baseURL, priceMultiPath))
+	if err != nil {
+		err = errors.Wrap(entities.ErrInternal, "url parse")
+	}
+	query := url.Query()
+	query.Set(queryVs_currencies, vs_currencies)
+	query.Set(queryIds, strings.Join(titles, ","))
+	url.RawQuery = query.Encode()
+
+	return url.String()
 }
 
 // func (c *client) prepareRequest(ctx context.Context, titles []string) (*http.Request, error) {
