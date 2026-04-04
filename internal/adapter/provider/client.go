@@ -22,8 +22,8 @@ const (
 )
 
 type client struct {
-	apiAuthorization string //apiAuthorization := "x-cg-demo-api-key"
-	apiKey           string //apiKey := "CG-SdGMn7C5Rv2F4hTMwLdJ1Pk6"
+	apiAuthorization string // apiAuthorization := "x-cg-demo-api-key"
+	apiKey           string // apiKey := "CG-SdGMn7C5Rv2F4hTMwLdJ1Pk6"
 	vs_currencies    string // usd
 	httpClient       *http.Client
 }
@@ -39,7 +39,7 @@ func WithTimeout(timeout time.Duration) Option {
 func WithCurrencies(vs_currencies string) Option {
 	return func(c *client) {
 		if strings.TrimSpace(vs_currencies) != "" {
-			c.vs_currencies = vs_currencies
+			c.vs_currencies = strings.ToLower(vs_currencies)
 		}
 	}
 }
@@ -67,7 +67,46 @@ func NewProviderClient(apiAuthorization string, apiKey string, opts ...Option) (
 }
 
 func (c *client) GetActualRates(ctx context.Context, titles []string) ([]*entities.Coin, error) {
-	///
+
+	request, err := c.prepareRequest(ctx, titles)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, errors.Wrap(entities.ErrInternal, "response error")
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return nil, errors.Wrap(entities.ErrInternal, "provider api error")
+	}
+
+	resultCoins, err := c.decodeResponse(response, titles)
+	if err != nil {
+		return nil, err
+	}
+
+	return resultCoins, nil
+}
+
+func buildUrl(titles []string, vs_currencies string) string {
+
+	url, err := url.Parse(fmt.Sprintf("%s%s", baseURL, priceMultiPath))
+	if err != nil {
+		err = errors.Wrap(entities.ErrInternal, "url parse")
+	}
+	query := url.Query() // map[string][]string
+	query.Set(queryVs_currencies, vs_currencies)
+	query.Set(queryIds, strings.Join(titles, ","))
+	url.RawQuery = query.Encode()
+
+	return url.String()
+}
+
+func (c *client) prepareRequest(ctx context.Context, titles []string) (*http.Request, error) {
+
 	if len(titles) == 0 {
 		return nil, errors.Wrap(entities.ErrInvalidParam, "empty titles")
 	}
@@ -84,18 +123,12 @@ func (c *client) GetActualRates(ctx context.Context, titles []string) ([]*entiti
 		return nil, errors.Wrapf(entities.ErrInternal, "request error: %v", err)
 	}
 	request.Header.Add(c.apiAuthorization, c.apiKey)
-	///
 
-	response, err := c.httpClient.Do(request)
-	if err != nil {
-		return nil, errors.Wrap(entities.ErrInternal, "response error")
-	}
-	defer response.Body.Close()
+	return request, nil
+}
 
-	if response.StatusCode != http.StatusOK {
-		return nil, errors.Wrap(entities.ErrInternal, "provider api error")
-	}
-	///
+func (c *client) decodeResponse(response *http.Response, titles []string) ([]*entities.Coin, error) {
+
 	parsedResponse := make(map[string]map[string]float64)
 
 	if err := json.NewDecoder(response.Body).Decode(&parsedResponse); err != nil {
@@ -111,55 +144,5 @@ func (c *client) GetActualRates(ctx context.Context, titles []string) ([]*entiti
 			}
 		}
 	}
-
 	return resultCoins, nil
 }
-
-func buildUrl(titles []string, vs_currencies string) string {
-	// url := "https://api.coingecko.com/api/v3/simple/price?vs_currencies=usd&ids=bitcoin%2Cethereum%2Ctron"
-
-	url, err := url.Parse(fmt.Sprintf("%s%s", baseURL, priceMultiPath))
-	if err != nil {
-		err = errors.Wrap(entities.ErrInternal, "url parse")
-	}
-	query := url.Query()
-	query.Set(queryVs_currencies, vs_currencies)
-	query.Set(queryIds, strings.Join(titles, ","))
-	url.RawQuery = query.Encode()
-
-	return url.String()
-}
-
-// func (c *client) prepareRequest(ctx context.Context, titles []string) (*http.Request, error) {
-// 	baseURL := "sacs"
-// 	priceMultiPath := "jkj"
-// 	// slog.Info("prepareRequest")
-// 	// ctx, span, cancel := tracer.Start(ctx, "prepareRequest adapter provider")
-// 	// defer cancel()
-// 	url, _ := url.Parse(fmt.Sprintf("%s%s", baseURL, priceMultiPath))
-// 	query := url.Query()
-// 	query.Set()
-
-// 	// url, err := url.Parse(fmt.Sprintf("%s%s", baseURL, priceMultiPath))
-// 	// if err != nil {
-// 	// 	err := errors.Wrap(entities.ErrInternal, "url parse")
-// 	// 	span.SetError(err)
-// 	// 	slog.Error("Parse", "err", err)
-// 	// 	return nil, err
-// 	// }
-
-// 	// query := url.Query()
-// 	// query.Set(queryFsyms, strings.Join(titles, ","))
-// 	// query.Set(queryTsyms, c.costIn)
-// 	// url.RawQuery = query.Encode()
-
-// 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url.String(), nil)
-// 	if err != nil {
-// 		err := errors.Wrap(entities.ErrInternal, "new request with context")
-// 		span.SetError(err)
-// 		slog.Error("NewRequestWithContext", "err", err)
-// 		return nil, err
-// 	}
-
-// 	return request, nil
-// }
