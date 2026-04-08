@@ -14,6 +14,8 @@ import (
 )
 
 const (
+	defaultCostIn = "usd"
+
 	baseURL        = "https://pro-api.coingecko.com/api/v3"
 	priceMultiPath = "/simple/price"
 
@@ -32,7 +34,9 @@ type Option func(c *client)
 
 func WithTimeout(timeout time.Duration) Option {
 	return func(c *client) {
-		c.httpClient.Timeout = timeout
+		if timeout > 0 {
+			c.httpClient.Timeout = timeout
+		}
 	}
 }
 
@@ -40,6 +44,14 @@ func WithCurrencies(vs_currencies string) Option {
 	return func(c *client) {
 		if strings.TrimSpace(vs_currencies) != "" {
 			c.vs_currencies = strings.ToLower(vs_currencies)
+		}
+	}
+}
+
+func (c *client) setOptions(opts ...Option) {
+	for _, opt := range opts {
+		if opt != nil {
+			opt(c)
 		}
 	}
 }
@@ -54,13 +66,11 @@ func NewProviderClient(apiAuthorization string, apiKey string, opts ...Option) (
 	c := &client{
 		apiAuthorization: apiAuthorization,
 		apiKey:           apiKey,
-		vs_currencies:    "usd",
+		vs_currencies:    strings.ToLower(defaultCostIn),
 		httpClient:       &http.Client{Timeout: time.Second * 10},
 	}
 
-	for _, opt := range opts {
-		opt(c)
-	}
+	c.setOptions(opts...)
 
 	return c, nil
 
@@ -83,7 +93,7 @@ func (c *client) GetActualRates(ctx context.Context, titles []string) ([]*entiti
 		return nil, errors.Wrap(entities.ErrInternal, "provider api error")
 	}
 
-	resultCoins, err := c.decodeResponse(response, titles)
+	resultCoins, err := c.decodeResponse(response)
 	if err != nil {
 		return nil, err
 	}
@@ -91,22 +101,21 @@ func (c *client) GetActualRates(ctx context.Context, titles []string) ([]*entiti
 	return resultCoins, nil
 }
 
-func buildUrl(titles []string, vs_currencies string) string {
+func buildUrl(titles []string, vs_currencies string) (string, error) {
 
-	url, err := url.Parse(fmt.Sprintf("%s%s", baseURL, priceMultiPath))
+	urlRaw, err := url.Parse(fmt.Sprintf("%s%s", baseURL, priceMultiPath))
 	if err != nil {
-		err = errors.Wrap(entities.ErrInternal, "url parse")
+		return "", errors.Wrap(entities.ErrInternal, "url parse failed")
 	}
-	query := url.Query() // map[string][]string
+	query := urlRaw.Query() // map[string][]string
 	query.Set(queryVs_currencies, vs_currencies)
 	query.Set(queryIds, strings.Join(titles, ","))
-	url.RawQuery = query.Encode()
+	urlRaw.RawQuery = query.Encode()
 
-	return url.String()
+	return urlRaw.String(), nil
 }
 
 func (c *client) prepareRequest(ctx context.Context, titles []string) (*http.Request, error) {
-
 	if len(titles) == 0 {
 		return nil, errors.Wrap(entities.ErrInvalidParam, "empty titles")
 	}
@@ -116,26 +125,28 @@ func (c *client) prepareRequest(ctx context.Context, titles []string) (*http.Req
 		qureyTitles[idx] = strings.ToLower(elem)
 	}
 
-	url := buildUrl(qureyTitles, c.vs_currencies)
+	url, err := buildUrl(qureyTitles, c.vs_currencies)
+	if err != nil {
+		return nil, err
+	}
 
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, errors.Wrapf(entities.ErrInternal, "request error: %v", err)
 	}
-	request.Header.Add(c.apiAuthorization, c.apiKey)
+	request.Header.Set(c.apiAuthorization, c.apiKey)
 
 	return request, nil
 }
 
-func (c *client) decodeResponse(response *http.Response, titles []string) ([]*entities.Coin, error) {
-
+func (c *client) decodeResponse(response *http.Response) ([]*entities.Coin, error) {
 	parsedResponse := make(map[string]map[string]float64)
 
 	if err := json.NewDecoder(response.Body).Decode(&parsedResponse); err != nil {
 		return nil, errors.Wrap(entities.ErrInternal, "invalid JSON response")
 	}
 
-	resultCoins := make([]*entities.Coin, 0, len(titles))
+	resultCoins := make([]*entities.Coin, 0, len(parsedResponse))
 	tmNow := time.Now()
 	for title, elem := range parsedResponse {
 		if price, ok := elem[c.vs_currencies]; ok {

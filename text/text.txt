@@ -1,13 +1,18 @@
-
-CG-SdGMn7C5Rv2F4hTMwLdJ1Pk6
-https://api.coingecko.com/api/v3/search
-
- client.go
+// postgres 123456
+// CG-SdGMn7C5Rv2F4hTMwLdJ1Pk6
+// https://api.coingecko.com/api/v3/search
+// client.go
  
 // добавить паттерн функциональные опции для конфигурирования таймаута клиента
 // net/url
- docker
- adapter storage??
+// docker
+
+// провалидировать поля опций, + на нулевые
+ миграции .up.sql и down.sql можно добавить индексы/можно нет.
+ научиться накатывать миграции
+ 
+ adapter storage?? pgx5 в качестве соединения *pgxpool.Pool
+
 
 
 
