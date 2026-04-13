@@ -15,6 +15,12 @@ tasks:
       - go install github.com/vektra/mockery/v2@v2.53.6
       - go install github.com/go-task/task/v3/cmd/task@latest
     silent: true
+  
+  mock:
+    desc: Run generate mock
+    cmds:
+      - go generate ./...
+    silent: true
 
   dc-up:
     desc: Run docker-compose
