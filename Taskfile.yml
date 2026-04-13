@@ -1,0 +1,63 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: '3'
+
+dotenv: ['.env']
+
+vars:
+  DB: 'postgres://{{.DB_USER}}:{{.DB_PASSWORD}}@localhost:5432/{{.DB_NAME}}?sslmode=disable'
+  N: '{{default "1" .N}}'
+
+tasks:
+  install:
+    desc: Install all dependencies
+    cmds:
+      - go install github.com/vektra/mockery/v2@v2.53.6
+      - go install github.com/go-task/task/v3/cmd/task@latest
+    silent: true
+
+  dc-up:
+    desc: Run docker-compose
+    cmds:
+      - docker compose up -d
+    silent: true
+
+  dc-down:
+    desc: Down docker-compose
+    cmds:
+      - docker compose down
+    silent: true
+
+  migrate-create:
+    desc: Create migrations(set the value NAME=...)
+    requires:
+      vars: [NAME]
+    cmds:
+      - migrate create -ext sql -dir migrations -seq {{.NAME}}
+    silent: true
+
+  migrate-up:
+    desc: Roll up migrations
+    cmds:
+      - migrate -source "file://migrations" -database "{{.DB}}" up
+    silent: true
+
+  migrate-up-int:
+    desc: Roll up migrations(set the value INT=...)
+    requires:
+      vars: [INT]
+    cmds:
+      - migrate -source "file://migrations" -database "{{.DB}}" up {{.INT}}
+    silent: true
+
+  migrate-down:
+    desc: Roll back migrations(default N=1, set the value N=...)
+    cmds:
+      - migrate -source "file://migrations" -database "{{.DB}}" down {{.N}}
+    silent: true
+
+  default:
+    desc: Available tasks for this project
+    cmds:
+      - task --list
+    silent: true

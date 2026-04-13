@@ -1,3 +1,4 @@
+// найти сайт в качестве клиента провайдера
 // postgres 123456
 // CG-SdGMn7C5Rv2F4hTMwLdJ1Pk6
 // https://api.coingecko.com/api/v3/search
@@ -5,34 +6,16 @@
  
 // добавить паттерн функциональные опции для конфигурирования таймаута клиента
 // net/url
-// docker
+// docker compose для запуска postres
 
-// провалидировать поля опций, + на нулевые
- миграции .up.sql и down.sql можно добавить индексы/можно нет.
- научиться накатывать миграции
+// провалидировать поля функциональных опций
+// миграции up.sql и down.sql Для названий: date +%s
+// создаешь схему, внутри этой схемы создаешь таблицу, можно добавить индексы/можно нет.
+// таблица в ней первичный ключ, title, price, timestamp
+// научиться по команде накатывать миграции и откатываться(утилита golang migrate),
+   - написать команду которая позволит откатывать миграции (makefile/taskfile)
  
- adapter storage?? pgx5 в качестве соединения *pgxpool.Pool
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+ adapter storage?? pgx v5 в качестве соединения *pgxpool.Pool
 
 
 
@@ -73,3 +56,13 @@
   - status code: 400, 404, 500 ...
   -response body: JSON with error + time
 */
+
+
+установить golang-migrate from ubuntu
+ - перейти по адресу: https://github.com/golang-migrate/migrate/releases
+ - скачать: migrate.linux-amd64.tar.gz 
+ - переместить в папку: Downloads
+ - распаковать фаил в дерикторию: sudo tar -xzf ~/Downloads/migrate.linux-amd64.tar.gz -C /usr/local/bin/
+ - сделать его исполняемым: sudo chmod +x /usr/local/bin/migrate
+ - вызвать команду: migrate --help
+ - проверить версию: migrate -version
