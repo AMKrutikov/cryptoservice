@@ -2,7 +2,10 @@ package postgres
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/AMKrutikov/cryptoservice/internal/cases"
 	"github.com/AMKrutikov/cryptoservice/internal/entities"
@@ -138,5 +141,45 @@ func (s *Storage) GetActualCoins(ctx context.Context, titles []string) ([]*entit
 }
 
 func (s *Storage) GetAggregateCoins(ctx context.Context, titles []string, aggType string) ([]*entities.Coin, error) { // Агрегированный запрос над монетами
-	return []*entities.Coin{}, nil
+	if len(titles) == 0 {
+		return nil, errors.Wrap(entities.ErrInvalidParam, "title cannot be empty")
+	}
+	aggTypeUpper := strings.ToUpper(aggType)
+	if aggTypeUpper != "MIN" && aggTypeUpper != "MAX" && aggTypeUpper != "AVG" {
+		return nil, errors.Wrap(entities.ErrInvalidParam, "incorrect value for aggregated rates")
+	}
+
+	sqlQuery := fmt.Sprintf(`
+	SELECT title, %s(price) AS result_price
+	FROM crypto.coins
+	WHERE title = ANY($1)
+	GROUP BY title
+	ORDER BY result_price ASC;`, aggTypeUpper)
+
+	rows, err := s.pool.Query(ctx, sqlQuery, titles)
+	if err != nil {
+		return nil, errors.Wrapf(entities.ErrInternal, "failed to query storage: %v", err)
+	}
+	defer rows.Close()
+
+	sliceCoins := make([]*entities.Coin, 0, len(titles))
+	actuaAt := time.Now()
+
+	for rows.Next() {
+		var coinModel CryptoModel
+		if err := rows.Scan(&coinModel.Title, &coinModel.Price); err != nil {
+			return nil, errors.Wrapf(entities.ErrInternal, "failed to scan rows: %v", err)
+		}
+		coin, err := entities.NewCoin(coinModel.Title, coinModel.Price, actuaAt)
+		if err != nil {
+			return nil, errors.Wrapf(entities.ErrInternal, "failed to create coin model: %v", err)
+		}
+		sliceCoins = append(sliceCoins, coin)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, errors.Wrapf(entities.ErrInternal, "failed to rows iteration: %v", err)
+	}
+
+	return sliceCoins, nil
 }
