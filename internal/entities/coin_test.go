@@ -67,7 +67,7 @@ func TestNewCoin(t *testing.T) {
 
 			require.Equal(t, elem.title, coin.Title())
 			require.Equal(t, elem.price, coin.Price())
-			require.Equal(t, now, coin.ActuaAT())
+			require.Equal(t, now, coin.ActualAt())
 		})
 	}
 }

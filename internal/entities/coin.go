@@ -35,6 +35,6 @@ func (c *Coin) Price() float64 {
 	return c.price
 }
 
-func (c *Coin) ActuaAT() time.Time {
+func (c *Coin) ActualAt() time.Time {
 	return c.actualAT
 }

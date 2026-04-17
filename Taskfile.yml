@@ -1,4 +1,5 @@
 # yaml-language-server: $schema=https://taskfile.dev/schema.json
+# - go install github.com/go-task/task/v3/cmd/task@latest
 
 version: '3'
 
@@ -13,7 +14,7 @@ tasks:
     desc: Install all dependencies
     cmds:
       - go install github.com/vektra/mockery/v2@v2.53.6
-      - go install github.com/go-task/task/v3/cmd/task@latest
+      - go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
     silent: true
   
   mock:
@@ -22,7 +23,7 @@ tasks:
       - go generate ./...
     silent: true
 
-  dc-up:
+  dc-up: # поправить
     desc: Run docker-compose
     cmds:
       - docker compose up -d
@@ -34,7 +35,7 @@ tasks:
       - docker compose down
     silent: true
 
-  migrate-create:
+  concreit-migrate-create:
     desc: Create migrations(set the value NAME=...)
     requires:
       vars: [NAME]
@@ -48,7 +49,7 @@ tasks:
       - migrate -source "file://migrations" -database "{{.DB}}" up
     silent: true
 
-  migrate-up-int:
+  migrate-up-bysteps:
     desc: Roll up migrations(set the value INT=...)
     requires:
       vars: [INT]
@@ -56,10 +57,16 @@ tasks:
       - migrate -source "file://migrations" -database "{{.DB}}" up {{.INT}}
     silent: true
 
-  migrate-down:
+  migrate-down-bystep:
     desc: Roll back migrations(default N=1, set the value N=...)
     cmds:
       - migrate -source "file://migrations" -database "{{.DB}}" down {{.N}}
+    silent: true
+
+  migrate-down:
+    desc: Roll back migrations(default N=1, set the value N=...)
+    cmds:
+      - migrate -source "file://migrations" -database "{{.DB}}" down
     silent: true
 
   default:
