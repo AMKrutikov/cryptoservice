@@ -74,30 +74,67 @@ func (s *Storage) GetCoinsList(ctx context.Context) ([]string, error) { // сп�
 	sqlQuery := `
 	SELECT DISTINCT title
 	FROM crypto.coins 
-	DISTINCT ON(title)
 	ORDER BY title ASC;`
-
-	titleCoins := make([]string, 0, 100)
 
 	rows, err := s.pool.Query(ctx, sqlQuery)
 	if err != nil {
-		return nil, errors.Wrapf(entities.ErrInternal, "failed to query to storage: %v", err)
+		return nil, errors.Wrapf(entities.ErrInternal, "failed to query storage: %v", err)
 	}
 	defer rows.Close()
+
+	titleCoins := make([]string, 0, 100)
 
 	for rows.Next() {
 		var title string
 		if err := rows.Scan(&title); err != nil {
-			return nil, errors.Wrapf(entities.ErrInternal, "failed to scan to rows: %v", err)
+			return nil, errors.Wrapf(entities.ErrInternal, "failed to scan rows: %v", err)
 		}
 		titleCoins = append(titleCoins, title)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, errors.Wrapf(entities.ErrInternal, "failed to rows iteration: %v", err)
 	}
 
 	return titleCoins, nil
 }
 
 func (s *Storage) GetActualCoins(ctx context.Context, titles []string) ([]*entities.Coin, error) { // получение последних монет по title-ам
-	return []*entities.Coin{}, nil
+	if len(titles) == 0 {
+		return nil, errors.Wrap(entities.ErrInvalidParam, "title cannot be empty")
+	}
+
+	sqlQuery := `
+	SELECT DISTINCT ON(title) title, price, actual_at
+	FROM crypto.coins
+	WHERE title = ANY($1)
+	ORDER BY title, actual_at DESC;`
+
+	rows, err := s.pool.Query(ctx, sqlQuery, titles)
+	if err != nil {
+		return nil, errors.Wrapf(entities.ErrInternal, "failed to query storage: %v", err)
+	}
+	defer rows.Close()
+
+	sliceCoins := make([]*entities.Coin, 0, len(titles))
+
+	for rows.Next() {
+		var coinModel CryptoModel
+		if err := rows.Scan(&coinModel.Title, &coinModel.Price, &coinModel.ActualAT); err != nil {
+			return nil, errors.Wrapf(entities.ErrInternal, "failed to scan rows: %v", err)
+		}
+		coin, err := entities.NewCoin(coinModel.Title, coinModel.Price, coinModel.ActualAT)
+		if err != nil {
+			return nil, errors.Wrapf(entities.ErrInternal, "failed to create coin model: %v", err)
+		}
+		sliceCoins = append(sliceCoins, coin)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, errors.Wrapf(entities.ErrInternal, "failed to rows iteration: %v", err)
+	}
+
+	return sliceCoins, nil
 }
 
 func (s *Storage) GetAggregateCoins(ctx context.Context, titles []string, aggType string) ([]*entities.Coin, error) { // Агрегированный запрос над монетами
