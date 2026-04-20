@@ -16,7 +16,7 @@ import (
 const (
 	defaultCostIn = "usd"
 
-	baseURL        = "https://pro-api.coingecko.com/api/v3"
+	baseURL        = "https://api.coingecko.com/api/v3"
 	priceMultiPath = "/simple/price"
 
 	queryVs_currencies = "vs_currencies"

@@ -86,8 +86,6 @@ func (s *Service) ActualizeRates(ctx context.Context) error {
 }
 
 func (s *Service) processCoins(ctx context.Context, titles []string) error {
-	missingCoins := make([]string, 0, len(titles))
-
 	if len(titles) == 0 {
 		return errors.Wrap(entities.ErrInvalidParam, "empty titles")
 	}
@@ -97,23 +95,29 @@ func (s *Service) processCoins(ctx context.Context, titles []string) error {
 		return errors.Wrap(err, "failed to get coins list from storage")
 	}
 
+	missingCoins := make([]string, 0, len(titles))
+
 	for _, elem := range titles {
 		if !slices.Contains(coinsStorage, elem) {
 			missingCoins = append(missingCoins, elem)
 		}
 	}
+
 	if len(missingCoins) == 0 {
 		return nil
 	}
+
 	providerCoins, err := s.provider.GetActualRates(ctx, missingCoins)
 	if err != nil {
 		return errors.Wrap(err, "failed to get actual rates from provider")
 	}
 
-	err = s.storage.Store(ctx, providerCoins)
-	if err != nil {
-		return errors.Wrap(err, "failed to save coins to storage")
+	if len(providerCoins) != 0 {
+		err = s.storage.Store(ctx, providerCoins)
+		if err != nil {
+			return errors.Wrap(err, "failed to save coins to storage")
+		}
 	}
-	return nil
 
+	return nil
 }
