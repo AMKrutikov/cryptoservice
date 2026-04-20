@@ -7,6 +7,7 @@ dotenv: ['.env']
 
 vars:
   DB: 'postgres://{{.DB_USER}}:{{.DB_PASSWORD}}@localhost:5432/{{.DB_NAME}}?sslmode=disable'
+  DBDOCKER: 'postgres://{{.DB_USER}}:{{.DB_PASSWORD}}@db:5432/{{.DB_NAME}}?sslmode=disable'
   N: '{{default "1" .N}}'
 
 tasks:
@@ -23,16 +24,42 @@ tasks:
       - go generate ./...
     silent: true
 
-  dc-up: # поправить
+  postgres-up:
     desc: Run docker-compose
     cmds:
       - docker compose up -d
     silent: true
 
-  dc-down:
+  run:
+    desc: Run app
+    cmds:
+      - go run cmd/app/main.go
+    silent: true
+
+  postgres-down:
     desc: Down docker-compose
     cmds:
       - docker compose down
+    silent: true
+
+  migrate-docker-down-bystep:
+    desc: Roll back migrations inside Docker (default N=1, set N=...)
+    cmds:
+      - docker compose run --rm migrator -path=/migrations/ -database="{{.DBDOCKER}}" down {{.N}}
+    silent: true
+
+  migrate-docker-up-bystep:
+    desc: Run migrations inside Docker (default N=1, set N=...)
+    cmds:
+      - docker compose run --rm migrator -path=/migrations/ -database="{{.DBDOCKER}}" up {{.N}}
+    silent: true
+
+  migrate-docker-create:
+    desc: Create a new migration (set NAME=...)
+    requires:
+      vars: [NAME]
+    cmds:
+      - docker compose run --rm migrator create -ext sql -dir /migrations -seq {{.NAME}}
     silent: true
 
   concreit-migrate-create:
@@ -64,7 +91,7 @@ tasks:
     silent: true
 
   migrate-down:
-    desc: Roll back migrations(default N=1, set the value N=...)
+    desc: Roll back migrations
     cmds:
       - migrate -source "file://migrations" -database "{{.DB}}" down
     silent: true

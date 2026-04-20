@@ -14,8 +14,12 @@
 // таблица в ней первичный ключ, title, price, timestamp
 // научиться по команде накатывать миграции и откатываться(утилита golang migrate),
 // написать команду которая позволит откатывать миграции (makefile/taskfile)
+
+// связать миграции с docker-compose
+// ручная проверка всех запросов к database
+ - подготовка проекта спецификации OpenAPI для сервиса
  
- - adapter storage?? pgx v5 в качестве соединения *pgxpool.Pool
+// adapter storage и все методы pgx v5 в качестве соединения *pgxpool.Pool
  - переходишь к реализации порта (chi/gorilla/gin)
  - подготовка config, adapter config, сборка приложения
 

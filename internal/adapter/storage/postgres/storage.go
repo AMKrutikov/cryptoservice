@@ -20,23 +20,21 @@ var (
 
 type Storage struct {
 	pool     *pgxpool.Pool
-	cancelFn context.CancelFunc //добавить метод
-	once     sync.Once          //???
+	cancelFn context.CancelFunc
+	once     sync.Once
 }
 
 func NewStorage(connString string) (*Storage, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
-	//func NewStorage(pgxPool *pgxpool.Pool) (*storage, error) {
-	connString = "postgres://postgres:123456@localhost:5432/postgres?sslmode=disable"
 	pgxPool, err := pgxpool.New(ctx, connString)
 	if err != nil {
 		cancel()
-		return nil, errors.Wrap(entities.ErrInternal, "failed to connect to the database")
+		return nil, errors.Wrapf(entities.ErrInternal, "failed to connect to the database: %v", err)
 	}
 	if err := pgxPool.Ping(ctx); err != nil {
 		cancel()
-		return nil, errors.Wrap(entities.ErrInternal, "failed to ping database")
+		return nil, errors.Wrapf(entities.ErrInternal, "failed to ping database: %v", err)
 	}
 
 	return &Storage{
@@ -46,9 +44,16 @@ func NewStorage(connString string) (*Storage, error) {
 	}, nil
 }
 
+func (s *Storage) Close() {
+	s.once.Do(func() {
+		s.cancelFn()
+		s.pool.Close()
+	})
+}
+
 func (s *Storage) Store(ctx context.Context, coins []*entities.Coin) error { // положить - метод сохранения в хранилище
 	if len(coins) == 0 {
-		return errors.Wrap(entities.ErrInternal, "no coins")
+		return errors.Wrap(entities.ErrInvalidParam, "no coins")
 	}
 
 	sqlQuery := `
