@@ -30,6 +30,84 @@
 
 
 
+Пишем http оболочку:
+
+// GetLastRates Получить последние цены монет по title-ам
+//     pattern: /coins/rates
+//     method: POST
+//     info: Body
+
+// Suceed:
+//     HTTP статус код 200 OK
+//     response body :получить ресурс(JSON слайс) в теле ответа
+
+// Failed:
+//
+//			response body: получить JSON с полем message(error) и с полем time
+//			HTTP статус код:
+//	                     v 400 Bad Request(err JSON.Decode - ошибка ErrInvalidParam)
+//					         v 400 Bad Request(пустой слайс - ошибка ErrInvalidParam)
+//		                 v 500 Internal Server Error (ошибка сервера, базы данных и т.д. ошибка - ErrInternal)
+
+// GetAggregateRates Получить агрегированное значение цены монет по title-ам
+// pattern: /coins/rates/aggregate
+// method: POST
+// info: Body
+
+// Suceed:
+//     HTTP статус код 200 OK
+//     response body :получить ресурс(JSON слайс) в теле ответа
+
+// Failed:
+//
+//		response body: получить JSON с полем message(error) и с полем time
+//		HTTP статус код: 400 Bad Request(пустой слайс - ошибка ErrInvalidParam)
+//	                 200 OK {} / 404 Not Found  (отстутсвуют монеты - ошибка ErrInvalidParam)
+//	                 500 Internal Server Error (ошибка сервера, базы данных и т.д. ошибка - ErrInternal)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+- ActualizeRates Демон который подгружает монеты с определенным интервалом которые есть в базе ???
+    pattern: /coins/actual/{titles}
+    method: GET
+    info: pattern
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

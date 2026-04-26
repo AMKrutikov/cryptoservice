@@ -21,6 +21,7 @@ func main() {
 	titles := []string{"solana", "tron", "bitcoin", "rain", "ripple", "zcash", "dai"}
 	//titles := []string{"xrp"}
 
+	// storage
 	connString, err := connPostgres()
 	if err != nil {
 		fmt.Println(err)
@@ -32,33 +33,28 @@ func main() {
 		return
 	}
 	defer storage.Close()
+	//
 
+	//provider
 	provider, err := coingecko.NewProviderClient("x-cg-demo-api-key", "CG-SdGMn7C5Rv2F4hTMwLdJ1Pk6")
 	if err != nil {
 		fmt.Printf("Provider error: %v\n", err)
 		return
 	}
+	//
 
+	//service
 	service, err := cases.NewService(provider, storage)
 	if err != nil {
 		fmt.Printf("Service error: %v\n", err)
 		return
 	}
+	//
 
 	result, err := service.GetLastRates(ctx, titles)
 	if err != nil {
 		fmt.Println(err)
 	}
-
-	// err = service.ActualizeRates(ctx)
-	// if err != nil {
-	// 	fmt.Println("error ActualizeRates", err)
-	// }
-
-	// result, err := service.GetAgregetedRates(ctx, titles, "a")
-	// if err != nil {
-	// 	fmt.Println("error AcGetAgregetedRates", err)
-	// }
 
 	for _, elem := range result {
 		fmt.Printf("Монета: %s Цена: %.4f Время:%s\n", elem.Title(), elem.Price(), elem.ActualAt().Format(time.Stamp))

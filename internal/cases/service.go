@@ -39,7 +39,7 @@ func (s *Service) GetLastRates(ctx context.Context, titles []string) ([]*entitie
 	return actualCoins, nil
 }
 
-func (s *Service) GetAgregetedRates(ctx context.Context, titles []string, aggType string) ([]*entities.Coin, error) {
+func (s *Service) GetAggregateRates(ctx context.Context, titles []string, aggType string) ([]*entities.Coin, error) {
 	if err := s.processCoins(ctx, titles); err != nil {
 		return nil, errors.Wrap(err, "failed to process coins")
 	}
