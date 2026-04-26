@@ -1,15 +1,14 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
-	"time"
 
 	coingecko "github.com/AMKrutikov/cryptoservice/internal/adapter/provider"
 	"github.com/AMKrutikov/cryptoservice/internal/adapter/storage/postgres"
 	"github.com/AMKrutikov/cryptoservice/internal/cases"
 	"github.com/AMKrutikov/cryptoservice/internal/entities"
+	"github.com/AMKrutikov/cryptoservice/internal/port/porthttp"
 	"github.com/joho/godotenv"
 	"github.com/pkg/errors"
 )
@@ -17,8 +16,8 @@ import (
 func main() {
 	// нужно настроить ожидание сигнала Ctrl+C
 
-	ctx := context.Background()
-	titles := []string{"solana", "tron", "bitcoin", "rain", "ripple", "zcash", "dai"}
+	//ctx := context.Background()
+	//titles := []string{"solana", "tron", "bitcoin", "rain", "ripple", "zcash", "dai"}
 	//titles := []string{"xrp"}
 
 	// storage
@@ -49,16 +48,25 @@ func main() {
 		fmt.Printf("Service error: %v\n", err)
 		return
 	}
+
+	// server := porthttp.NewServer(service)
+	// serverRun := porthttp.NewHTTPServer(server)
+	// if err := serverRun.StartServer(); err != nil {
+	// 	fmt.Println("Error start server")
+	// }
+
+	serverRun := porthttp.NewServer(service) ///
+	serverRun.Start()                        ///
 	//
 
-	result, err := service.GetLastRates(ctx, titles)
-	if err != nil {
-		fmt.Println(err)
-	}
+	// result, err := service.GetLastRates(ctx, titles)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
 
-	for _, elem := range result {
-		fmt.Printf("Монета: %s Цена: %.4f Время:%s\n", elem.Title(), elem.Price(), elem.ActualAt().Format(time.Stamp))
-	}
+	// for _, elem := range result {
+	// 	fmt.Printf("Монета: %s Цена: %.4f Время:%s\n", elem.Title(), elem.Price(), elem.ActualAt().Format(time.Stamp))
+	// }
 
 }
 

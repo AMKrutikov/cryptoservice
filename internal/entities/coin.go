@@ -10,10 +10,10 @@ import (
 type Coin struct {
 	title    string
 	price    float64
-	actualAT time.Time
+	actualAt time.Time
 }
 
-func NewCoin(title string, price float64, actualAT time.Time) (*Coin, error) {
+func NewCoin(title string, price float64, actualAt time.Time) (*Coin, error) {
 	if strings.TrimSpace(title) == "" {
 		return nil, errors.Wrap(ErrInvalidParam, "title cannot be empty")
 	}
@@ -23,7 +23,7 @@ func NewCoin(title string, price float64, actualAT time.Time) (*Coin, error) {
 	return &Coin{
 		title:    title,
 		price:    price,
-		actualAT: actualAT,
+		actualAt: actualAt,
 	}, nil
 }
 
@@ -36,5 +36,5 @@ func (c *Coin) Price() float64 {
 }
 
 func (c *Coin) ActualAt() time.Time {
-	return c.actualAT
+	return c.actualAt
 }

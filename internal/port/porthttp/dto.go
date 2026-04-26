@@ -1,4 +1,4 @@
-package http
+package porthttp
 
 import (
 	"encoding/json"
@@ -39,9 +39,24 @@ func (e *errorDTO) toString() string {
 	return string(b)
 }
 
-func responseJSON(w http.ResponseWriter, coins []*entities.Coin) {
+type coinResponseDTO struct {
+	Title    string    `json:"title"`
+	Price    float64   `json:"price"`
+	ActualAt time.Time `json:"actual_at"`
+}
 
-	coinsJson, err := json.MarshalIndent(coins, "", "    ")
+func responseJSON(w http.ResponseWriter, coins []*entities.Coin) {
+	responseDTO := make([]coinResponseDTO, 0, len(coins))
+
+	for _, elem := range coins {
+		responseDTO = append(responseDTO, coinResponseDTO{
+			Title:    elem.Title(),
+			Price:    elem.Price(),
+			ActualAt: elem.ActualAt(),
+		})
+	}
+
+	coinsJson, err := json.MarshalIndent(responseDTO, "", "    ")
 	if err != nil {
 		err := errors.Wrapf(entities.ErrInternal, "failed to json response: %v", err)
 		responseError(w, err, http.StatusInternalServerError)
