@@ -2,10 +2,8 @@ package postgres
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/AMKrutikov/cryptoservice/internal/cases"
 	"github.com/AMKrutikov/cryptoservice/internal/entities"
@@ -16,6 +14,12 @@ import (
 
 var (
 	_ cases.CryptoStorage = (*Storage)(nil)
+)
+
+const (
+	min = "min"
+	max = "max"
+	avg = "avg"
 )
 
 type Storage struct {
@@ -90,7 +94,7 @@ func (s *Storage) GetCoinsList(ctx context.Context) ([]string, error) { // сп�
 	}
 	defer rows.Close()
 
-	titleCoins := make([]string, 0, 100)
+	titleCoins := make([]string, 0)
 
 	for rows.Next() {
 		var title string
@@ -133,7 +137,7 @@ func (s *Storage) GetActualCoins(ctx context.Context, titles []string) ([]*entit
 		}
 		coin, err := entities.NewCoin(coinModel.Title, coinModel.Price, coinModel.ActualAT)
 		if err != nil {
-			return nil, errors.Wrapf(entities.ErrInternal, "failed to create coin model: %v", err)
+			return nil, errors.Wrap(err, "failed to create coin")
 		}
 		sliceCoins = append(sliceCoins, coin)
 	}
@@ -149,17 +153,20 @@ func (s *Storage) GetAggregateCoins(ctx context.Context, titles []string, aggTyp
 	if len(titles) == 0 {
 		return nil, errors.Wrap(entities.ErrInvalidParam, "title cannot be empty")
 	}
-	aggTypeUpper := strings.ToUpper(aggType)
-	if aggTypeUpper != "MIN" && aggTypeUpper != "MAX" && aggTypeUpper != "AVG" {
+	var aggTypeUpper string
+	switch strings.ToLower(aggType) {
+	case min, max, avg:
+		aggTypeUpper = strings.ToUpper(aggType)
+	default:
 		return nil, errors.Wrap(entities.ErrInvalidParam, "incorrect value for aggregated rates")
 	}
 
-	sqlQuery := fmt.Sprintf(`
-	SELECT title, %s(price) AS result_price
+	sqlQuery := `
+	SELECT title, ` + aggTypeUpper + `(price) AS result_price, CURRENT_DATE AS actual_at
 	FROM crypto.coins
 	WHERE title = ANY($1)
 	GROUP BY title
-	ORDER BY result_price ASC;`, aggTypeUpper)
+	ORDER BY result_price ASC;`
 
 	rows, err := s.pool.Query(ctx, sqlQuery, titles)
 	if err != nil {
@@ -168,16 +175,15 @@ func (s *Storage) GetAggregateCoins(ctx context.Context, titles []string, aggTyp
 	defer rows.Close()
 
 	sliceCoins := make([]*entities.Coin, 0, len(titles))
-	actuaAt := time.Now()
 
 	for rows.Next() {
 		var coinModel CryptoModel
-		if err := rows.Scan(&coinModel.Title, &coinModel.Price); err != nil {
+		if err := rows.Scan(&coinModel.Title, &coinModel.Price, &coinModel.ActualAT); err != nil {
 			return nil, errors.Wrapf(entities.ErrInternal, "failed to scan rows: %v", err)
 		}
-		coin, err := entities.NewCoin(coinModel.Title, coinModel.Price, actuaAt)
+		coin, err := entities.NewCoin(coinModel.Title, coinModel.Price, coinModel.ActualAT)
 		if err != nil {
-			return nil, errors.Wrapf(entities.ErrInternal, "failed to create coin model: %v", err)
+			return nil, errors.Wrap(err, "error create new coin")
 		}
 		sliceCoins = append(sliceCoins, coin)
 	}

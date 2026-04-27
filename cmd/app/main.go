@@ -55,8 +55,10 @@ func main() {
 	// 	fmt.Println("Error start server")
 	// }
 
-	serverRun := porthttp.NewServer(service) ///
-	serverRun.Start()                        ///
+	serverRun := porthttp.NewServer(service)  ///
+	if err := serverRun.Start(); err != nil { ///
+		fmt.Println("Error start server") ///
+	} ///
 	//
 
 	// result, err := service.GetLastRates(ctx, titles)
