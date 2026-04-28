@@ -16,12 +16,14 @@
 // написать команду которая позволит откатывать миграции (makefile/taskfile)
 
 // связать миграции с docker-compose
-// ручная проверка всех запросов к database
+// ручная проверка всех запросов миграций к database
  - подготовка проекта спецификации OpenAPI для сервиса
  
 // adapter storage и все методы pgx v5 в качестве соединения *pgxpool.Pool
- - переходишь к реализации порта (chi/gorilla/gin)
- - подготовка config, adapter config, сборка приложения
+// переходишь к реализации порта (chi/gorilla/gin)
+
+ - анатации doc.go, handler.go . - на их основании сгенерировать swagger документацию.
+ - подготовка config, adapter config, application сборка приложения, main
 
 
 

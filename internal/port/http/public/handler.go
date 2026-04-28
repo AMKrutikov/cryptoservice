@@ -10,6 +10,29 @@ import (
 	"github.com/pkg/errors"
 )
 
+// ShowAccount godoc
+// @Summary      Show an account
+// @Description  get string by ID
+// @Tags         accounts
+// @Accept       json
+// @Produce      json
+// @Param        id   path      int  true  "Account ID"
+// @Success      200  {object}  model.Account
+// @Failure      400  {object}  httputil.HTTPError
+// @Failure      404  {object}  httputil.HTTPError
+// @Failure      500  {object}  httputil.HTTPError
+// @Router       /accounts/{id} [get]
+
+// @Summary      Getting rates cryptocurrencies
+// @Description  Accepts coin names and returns the latest current prices
+// @Tags         Crypto
+// @Accept       json
+// @Produce      json
+// @Param        request  body      dto.CryptoDTO  true  "list titles coins"
+// @Success      200      {array}   dto.CoinResponseDTO  "list crypto coins"
+// @Failure      400      {object}  dto.ErrorDTO         "invalid JSON or empty list"
+// @Failure      500      {object}  dto.ErrorDTO         "serviceerver Error"
+// @Router       /coins/rates [post]
 func (s *Server) GetLastRates(w http.ResponseWriter, r *http.Request) {
 	var coinDTO dto.CryptoDTO
 
@@ -45,6 +68,16 @@ func (s *Server) GetLastRates(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// @Summary      Getting aggregated rates cryptocurrencies
+// @Description  Accepts coin names and returns min, max or avg prices
+// @Tags         Crypto
+// @Accept       json
+// @Produce      json
+// @Param        request  body      dto.AggregateDTO  true  "list titles coins and aggtype(min/max/avg)"
+// @Success      200      {array}   dto.CoinResponseDTO  "list crypto coins and aggregated type"
+// @Failure      400      {object}  dto.ErrorDTO         "invalid JSON or empty list"
+// @Failure      500      {object}  dto.ErrorDTO         "serviceerver Error"
+// @Router       /coins/rates/aggregate [post]
 func (s *Server) GetAggregateRates(w http.ResponseWriter, r *http.Request) {
 	var aggDTO dto.AggregateDTO
 

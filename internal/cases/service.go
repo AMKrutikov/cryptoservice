@@ -27,7 +27,7 @@ func NewService(provider CryptoProvider, storage CryptoStorage) (*Service, error
 	}, nil
 }
 
-func (s *Service) GetLastRates(ctx context.Context, titles []string) ([]*entities.Coin, error) { // Получить последние цены
+func (s *Service) GetLastRates(ctx context.Context, titles []string) ([]*entities.Coin, error) {
 	if err := s.processCoins(ctx, titles); err != nil {
 		return nil, errors.Wrap(err, "failed to process coins")
 	}

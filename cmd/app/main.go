@@ -8,17 +8,13 @@ import (
 	"github.com/AMKrutikov/cryptoservice/internal/adapter/storage/postgres"
 	"github.com/AMKrutikov/cryptoservice/internal/cases"
 	"github.com/AMKrutikov/cryptoservice/internal/entities"
-	"github.com/AMKrutikov/cryptoservice/internal/port/porthttp"
+	"github.com/AMKrutikov/cryptoservice/internal/port/http/public"
 	"github.com/joho/godotenv"
 	"github.com/pkg/errors"
 )
 
 func main() {
 	// нужно настроить ожидание сигнала Ctrl+C
-
-	//ctx := context.Background()
-	//titles := []string{"solana", "tron", "bitcoin", "rain", "ripple", "zcash", "dai"}
-	//titles := []string{"xrp"}
 
 	// storage
 	connString, err := connPostgres()
@@ -49,26 +45,10 @@ func main() {
 		return
 	}
 
-	// server := porthttp.NewServer(service)
-	// serverRun := porthttp.NewHTTPServer(server)
-	// if err := serverRun.StartServer(); err != nil {
-	// 	fmt.Println("Error start server")
-	// }
-
-	serverRun := porthttp.NewServer(service)  ///
-	if err := serverRun.Start(); err != nil { ///
+	serverRun := public.NewServer(service)                 ///
+	if err := serverRun.StartServer(":9091"); err != nil { ///
 		fmt.Println("Error start server") ///
-	} ///
-	//
-
-	// result, err := service.GetLastRates(ctx, titles)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-
-	// for _, elem := range result {
-	// 	fmt.Printf("Монета: %s Цена: %.4f Время:%s\n", elem.Title(), elem.Price(), elem.ActualAt().Format(time.Stamp))
-	// }
+	}
 
 }
 
