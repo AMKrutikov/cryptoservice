@@ -1,0 +1,115 @@
+basePath: /cryptoservice/v1
+definitions:
+  github_com_AMKrutikov_cryptoservice_pkg_dto.AggregateDTO:
+    properties:
+      agg_type:
+        example: avg
+        type: string
+      titles:
+        example:
+        - bitcoin
+        - ethereum
+        items:
+          type: string
+        type: array
+    type: object
+  github_com_AMKrutikov_cryptoservice_pkg_dto.CoinResponseDTO:
+    properties:
+      actual_at:
+        type: string
+      price:
+        type: number
+      title:
+        type: string
+    type: object
+  github_com_AMKrutikov_cryptoservice_pkg_dto.CryptoDTO:
+    properties:
+      titles:
+        example:
+        - bitcoin
+        - ethereum
+        items:
+          type: string
+        type: array
+    type: object
+  github_com_AMKrutikov_cryptoservice_pkg_dto.ErrorDTO:
+    properties:
+      message:
+        type: string
+      time:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: andrewleo05.87@gmail.com
+  description: This is a server for crypto coins
+  termsOfService: http://swagger.io/terms/
+  title: Crypto Service API
+  version: "1.0"
+paths:
+  /coins/rates:
+    post:
+      consumes:
+      - application/json
+      description: Accepts coin names and returns the latest current prices
+      parameters:
+      - description: list titles coins
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_AMKrutikov_cryptoservice_pkg_dto.CryptoDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: list crypto coins
+          schema:
+            items:
+              $ref: '#/definitions/github_com_AMKrutikov_cryptoservice_pkg_dto.CoinResponseDTO'
+            type: array
+        "400":
+          description: invalid JSON or empty list
+          schema:
+            $ref: '#/definitions/github_com_AMKrutikov_cryptoservice_pkg_dto.ErrorDTO'
+        "500":
+          description: serviceerver Error
+          schema:
+            $ref: '#/definitions/github_com_AMKrutikov_cryptoservice_pkg_dto.ErrorDTO'
+      summary: Getting rates cryptocurrencies
+      tags:
+      - Crypto
+  /coins/rates/aggregate:
+    post:
+      consumes:
+      - application/json
+      description: Accepts coin names and returns min, max or avg prices
+      parameters:
+      - description: list titles coins and aggtype(min/max/avg)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_AMKrutikov_cryptoservice_pkg_dto.AggregateDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: list crypto coins and aggregated type
+          schema:
+            items:
+              $ref: '#/definitions/github_com_AMKrutikov_cryptoservice_pkg_dto.CoinResponseDTO'
+            type: array
+        "400":
+          description: invalid JSON or empty list
+          schema:
+            $ref: '#/definitions/github_com_AMKrutikov_cryptoservice_pkg_dto.ErrorDTO'
+        "500":
+          description: serviceerver Error
+          schema:
+            $ref: '#/definitions/github_com_AMKrutikov_cryptoservice_pkg_dto.ErrorDTO'
+      summary: Getting aggregated rates cryptocurrencies
+      tags:
+      - Crypto
+swagger: "2.0"

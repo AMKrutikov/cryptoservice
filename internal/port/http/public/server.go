@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
+	_ "github.com/AMKrutikov/cryptoservice/docs"
 	"github.com/AMKrutikov/cryptoservice/internal/port"
 	"github.com/gorilla/mux"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 const (
@@ -29,6 +31,8 @@ func NewServer(service port.Service) *Server {
 func (s *Server) StartServer(address string) error {
 	s.router.Path(fmt.Sprintf("%s%s", basePath, ratesPath)).Methods(http.MethodPost).HandlerFunc(s.GetLastRates)
 	s.router.Path(fmt.Sprintf("%s%s%s", basePath, ratesPath, aggregatePath)).Methods(http.MethodPost).HandlerFunc(s.GetAggregateRates)
+
+	s.router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
 	return http.ListenAndServe(address, s.router)
 }

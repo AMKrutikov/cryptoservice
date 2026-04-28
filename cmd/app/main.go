@@ -46,7 +46,7 @@ func main() {
 	}
 
 	serverRun := public.NewServer(service)                 ///
-	if err := serverRun.StartServer(":9091"); err != nil { ///
+	if err := serverRun.StartServer(":8080"); err != nil { ///
 		fmt.Println("Error start server") ///
 	}
 

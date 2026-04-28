@@ -1,0 +1,175 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a server for crypto coins",
+        "title": "Crypto Service API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "email": "andrewleo05.87@gmail.com"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/cryptoservice/v1",
+    "paths": {
+        "/coins/rates": {
+            "post": {
+                "description": "Accepts coin names and returns the latest current prices",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Crypto"
+                ],
+                "summary": "Getting rates cryptocurrencies",
+                "parameters": [
+                    {
+                        "description": "list titles coins",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_AMKrutikov_cryptoservice_pkg_dto.CryptoDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "list crypto coins",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_AMKrutikov_cryptoservice_pkg_dto.CoinResponseDTO"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "invalid JSON or empty list",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_AMKrutikov_cryptoservice_pkg_dto.ErrorDTO"
+                        }
+                    },
+                    "500": {
+                        "description": "serviceerver Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_AMKrutikov_cryptoservice_pkg_dto.ErrorDTO"
+                        }
+                    }
+                }
+            }
+        },
+        "/coins/rates/aggregate": {
+            "post": {
+                "description": "Accepts coin names and returns min, max or avg prices",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Crypto"
+                ],
+                "summary": "Getting aggregated rates cryptocurrencies",
+                "parameters": [
+                    {
+                        "description": "list titles coins and aggtype(min/max/avg)",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_AMKrutikov_cryptoservice_pkg_dto.AggregateDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "list crypto coins and aggregated type",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_AMKrutikov_cryptoservice_pkg_dto.CoinResponseDTO"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "invalid JSON or empty list",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_AMKrutikov_cryptoservice_pkg_dto.ErrorDTO"
+                        }
+                    },
+                    "500": {
+                        "description": "serviceerver Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_AMKrutikov_cryptoservice_pkg_dto.ErrorDTO"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "github_com_AMKrutikov_cryptoservice_pkg_dto.AggregateDTO": {
+            "type": "object",
+            "properties": {
+                "agg_type": {
+                    "type": "string",
+                    "example": "avg"
+                },
+                "titles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "bitcoin",
+                        "ethereum"
+                    ]
+                }
+            }
+        },
+        "github_com_AMKrutikov_cryptoservice_pkg_dto.CoinResponseDTO": {
+            "type": "object",
+            "properties": {
+                "actual_at": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_AMKrutikov_cryptoservice_pkg_dto.CryptoDTO": {
+            "type": "object",
+            "properties": {
+                "titles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "bitcoin",
+                        "ethereum"
+                    ]
+                }
+            }
+        },
+        "github_com_AMKrutikov_cryptoservice_pkg_dto.ErrorDTO": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "time": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}
