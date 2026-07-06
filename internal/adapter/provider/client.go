@@ -90,9 +90,13 @@ func (c *client) GetActualRates(ctx context.Context, titles []string) ([]*entiti
 		return nil, errors.Wrap(entities.ErrInternal, "provider api error")
 	}
 
-	resultCoins, err := c.decodeResponse(response)
+	resultCoins, missingCoin, err := c.decodeResponse(response, titles)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(missingCoin) > 0 {
+		return nil, errors.Wrapf(entities.ErrInvalidParam, "coins not found: %s", strings.Join(missingCoin, ", "))
 	}
 
 	return resultCoins, nil
@@ -133,16 +137,16 @@ func (c *client) prepareRequest(ctx context.Context, titles []string) (*http.Req
 	if err != nil {
 		return nil, errors.Wrapf(entities.ErrInternal, "request error: %v", err)
 	}
-	//request.Header.Set(c.apiAuthorization, c.apiKey)
 
 	return request, nil
 }
 
-func (c *client) decodeResponse(response *http.Response) ([]*entities.Coin, error) {
+func (c *client) decodeResponse(response *http.Response, requestTitles []string) ([]*entities.Coin, []string, error) {
 	parsedResponse := make(map[string]map[string]float64)
+	missingsCoin := make([]string, 0, len(requestTitles))
 
 	if err := json.NewDecoder(response.Body).Decode(&parsedResponse); err != nil {
-		return nil, errors.Wrap(entities.ErrInternal, "invalid JSON response")
+		return nil, nil, errors.Wrap(entities.ErrInternal, "invalid JSON response")
 	}
 
 	resultCoins := make([]*entities.Coin, 0, len(parsedResponse))
@@ -154,5 +158,12 @@ func (c *client) decodeResponse(response *http.Response) ([]*entities.Coin, erro
 			}
 		}
 	}
-	return resultCoins, nil
+
+	for _, elem := range requestTitles {
+		if _, exists := parsedResponse[elem]; !exists {
+			missingsCoin = append(missingsCoin, elem)
+		}
+	}
+
+	return resultCoins, missingsCoin, nil
 }

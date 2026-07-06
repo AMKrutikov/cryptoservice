@@ -41,10 +41,6 @@ func (c *Config) StorageConnectionString(storageType string) string {
 	return c.Koanf.String(fmt.Sprintf("%s.connection_string", storageType))
 }
 
-func (c *Config) CoingeckoAuthKey() string {
-	return c.Koanf.String("providers.coingecko.auth_key")
-}
-
 func (c *Config) CoingeckoAPIKey() string {
 	return c.Koanf.String("providers.coingecko.api_key")
 }

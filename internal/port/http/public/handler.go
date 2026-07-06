@@ -15,10 +15,10 @@ import (
 // @Tags         Crypto
 // @Accept       json
 // @Produce      json
-// @Param        request  body      dto.CryptoDTO  true  "list titles coins"
+// @Param        request  body      dto.CryptoDTO  true  "list of coin titles"
 // @Success      200      {array}   dto.CoinResponseDTO  "list crypto coins"
-// @Failure      400      {object}  dto.ErrorDTO         "invalid JSON or empty list"
-// @Failure      500      {object}  dto.ErrorDTO         "serviceerver Error"
+// @Failure      400      {object}  dto.ErrorDTO         "invalid JSON, empty list or unknown coins"
+// @Failure      500      {object}  dto.ErrorDTO         "internal server error"
 // @Router       /coins/rates [post]
 func (s *Server) GetLastRates(w http.ResponseWriter, r *http.Request) {
 	var coinDTO dto.CryptoDTO
@@ -62,8 +62,8 @@ func (s *Server) GetLastRates(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Param        request  body      dto.AggregateDTO  true  "list titles coins and aggtype(min/max/avg)"
 // @Success      200      {array}   dto.CoinResponseDTO  "list crypto coins and aggregated type"
-// @Failure      400      {object}  dto.ErrorDTO         "invalid JSON or empty list"
-// @Failure      500      {object}  dto.ErrorDTO         "serviceerver Error"
+// @Failure      400      {object}  dto.ErrorDTO         "invalid JSON, empty list, invalid aggType or unknown coins"
+// @Failure      500      {object}  dto.ErrorDTO         "internal server error"
 // @Router       /coins/rates/aggregate [post]
 func (s *Server) GetAggregateRates(w http.ResponseWriter, r *http.Request) {
 	var aggDTO dto.AggregateDTO

@@ -47,10 +47,22 @@ func ResponseJSON(w http.ResponseWriter, coins []*entities.Coin) {
 }
 
 func ResponseError(w http.ResponseWriter, message error, statusCode int) {
-	ErrorDTO := ErrorDTO{Message: message.Error(), Time: time.Now()}
-	b, err := json.MarshalIndent(ErrorDTO, "", "    ")
+	errDTO := ErrorDTO{Message: message.Error(), Time: time.Now()}
+	b, err := json.MarshalIndent(errDTO, "", "    ")
 	if err != nil {
-		panic(err)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		if _, err = w.Write([]byte(`{"message": "internal server error"}`)); err != nil {
+			errors.Wrapf(entities.ErrInternal, "failed to write http responseError: %v", err)
+			return
+		}
+		return
 	}
-	http.Error(w, string(b), statusCode)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	if _, err = w.Write(b); err != nil {
+		errors.Wrapf(entities.ErrInternal, "failed to write http responseError: %v", err)
+		return
+	}
 }

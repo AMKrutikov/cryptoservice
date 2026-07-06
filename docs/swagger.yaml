@@ -54,7 +54,7 @@ paths:
       - application/json
       description: Accepts coin names and returns the latest current prices
       parameters:
-      - description: list titles coins
+      - description: list of coin titles
         in: body
         name: request
         required: true
@@ -70,11 +70,11 @@ paths:
               $ref: '#/definitions/github_com_AMKrutikov_cryptoservice_pkg_dto.CoinResponseDTO'
             type: array
         "400":
-          description: invalid JSON or empty list
+          description: invalid JSON, empty list or unknown coins
           schema:
             $ref: '#/definitions/github_com_AMKrutikov_cryptoservice_pkg_dto.ErrorDTO'
         "500":
-          description: serviceerver Error
+          description: internal server error
           schema:
             $ref: '#/definitions/github_com_AMKrutikov_cryptoservice_pkg_dto.ErrorDTO'
       summary: Getting rates cryptocurrencies
@@ -102,11 +102,11 @@ paths:
               $ref: '#/definitions/github_com_AMKrutikov_cryptoservice_pkg_dto.CoinResponseDTO'
             type: array
         "400":
-          description: invalid JSON or empty list
+          description: invalid JSON, empty list, invalid aggType or unknown coins
           schema:
             $ref: '#/definitions/github_com_AMKrutikov_cryptoservice_pkg_dto.ErrorDTO'
         "500":
-          description: serviceerver Error
+          description: internal server error
           schema:
             $ref: '#/definitions/github_com_AMKrutikov_cryptoservice_pkg_dto.ErrorDTO'
       summary: Getting aggregated rates cryptocurrencies

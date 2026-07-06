@@ -33,7 +33,7 @@ const docTemplate = `{
                 "summary": "Getting rates cryptocurrencies",
                 "parameters": [
                     {
-                        "description": "list titles coins",
+                        "description": "list of coin titles",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -53,13 +53,13 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "invalid JSON or empty list",
+                        "description": "invalid JSON, empty list or unknown coins",
                         "schema": {
                             "$ref": "#/definitions/github_com_AMKrutikov_cryptoservice_pkg_dto.ErrorDTO"
                         }
                     },
                     "500": {
-                        "description": "serviceerver Error",
+                        "description": "internal server error",
                         "schema": {
                             "$ref": "#/definitions/github_com_AMKrutikov_cryptoservice_pkg_dto.ErrorDTO"
                         }
@@ -102,13 +102,13 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "invalid JSON or empty list",
+                        "description": "invalid JSON, empty list, invalid aggType or unknown coins",
                         "schema": {
                             "$ref": "#/definitions/github_com_AMKrutikov_cryptoservice_pkg_dto.ErrorDTO"
                         }
                     },
                     "500": {
-                        "description": "serviceerver Error",
+                        "description": "internal server error",
                         "schema": {
                             "$ref": "#/definitions/github_com_AMKrutikov_cryptoservice_pkg_dto.ErrorDTO"
                         }
