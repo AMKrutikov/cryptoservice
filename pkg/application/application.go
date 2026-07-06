@@ -41,9 +41,9 @@ func (app *Application) Run() {
 }
 
 func (app *Application) initCryptoProvider() {
-	authKey := app.cnfg.CoingeckoAuthKey()
+	//authKey := app.cnfg.CoingeckoAuthKey()
 	apiKey := app.cnfg.CoingeckoAPIKey()
-	client, err := coingecko.NewProviderClient(authKey, apiKey)
+	client, err := coingecko.NewProviderClient(apiKey)
 	if err != nil {
 		panic(err)
 	}

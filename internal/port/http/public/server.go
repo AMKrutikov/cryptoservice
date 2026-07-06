@@ -1,7 +1,6 @@
 package public
 
 import (
-	"fmt"
 	"net/http"
 
 	_ "github.com/AMKrutikov/cryptoservice/docs"
@@ -12,8 +11,8 @@ import (
 
 const (
 	basePath      = "/cryptoservice/v1"
-	ratesPath     = "/cryptoservice/v1/coins/rates/aggregate"
-	aggregatePath = "/aggregate"
+	ratesPath     = basePath + "/coins/rates"
+	aggregatePath = ratesPath + "/aggregate"
 )
 
 type Server struct {
@@ -29,8 +28,8 @@ func NewServer(service port.Service) *Server {
 }
 
 func (s *Server) StartServer(address string) error {
-	s.router.Path(fmt.Sprintf("%s%s", basePath, ratesPath)).Methods(http.MethodPost).HandlerFunc(s.GetLastRates)
-	s.router.Path(fmt.Sprintf("%s%s%s", basePath, ratesPath, aggregatePath)).Methods(http.MethodPost).HandlerFunc(s.GetAggregateRates)
+	s.router.HandleFunc(ratesPath, s.GetLastRates).Methods(http.MethodPost)
+	s.router.HandleFunc(aggregatePath, s.GetAggregateRates).Methods(http.MethodPost)
 
 	s.router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
