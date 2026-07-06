@@ -1,16 +1,12 @@
-// пишем реализацию методов в service.go
-// cases_test.go: пишем тесты для service.go - cover 100%
-// исправляем ошибки(делаем wrap)
-// найти сайт с api с запросом по titles и получение текущих цен(usd, rub и т.д.)
-// написать httpclient(client.go ) - adapter для этого сайта который будет имплементировать метод GetActualRates
-
+// найти сайт в качестве клиента провайдера
 // postgres 123456
 // CG-SdGMn7C5Rv2F4hTMwLdJ1Pk6
 // https://api.coingecko.com/api/v3/search
+// client.go
  
 // добавить паттерн функциональные опции для конфигурирования таймаута клиента
 // net/url
-// docker
+// docker compose для запуска postres
 
 // провалидировать поля функциональных опций
 // миграции up.sql и down.sql Для названий: date +%s
@@ -20,12 +16,104 @@
 // написать команду которая позволит откатывать миграции (makefile/taskfile)
 
 // связать миграции с docker-compose
-// ручная проверка всех запросов к database
+// ручная проверка всех запросов миграций к database
  - подготовка проекта спецификации OpenAPI для сервиса
  
 // adapter storage и все методы pgx v5 в качестве соединения *pgxpool.Pool
- - переходишь к реализации порта (chi/gorilla/gin)
- - подготовка config, adapter config, сборка приложения
+// переходишь к реализации порта (chi/gorilla/gin)
+
+// - анатации doc.go, handler.go . - на их основании сгенерировать swagger документацию.
+// - подготовка config, adapter config, application сборка приложения, main
+
+// - добавить обработку для несуществующих монет
+ - cronJob для ActualizeRates
+
+ - добавить сборку инстанса приложение в фаил docker-compose
+ - вынос настроечных параметров в конфигурационный фаил
+
+ - Grace full shutdown
+ - Логи(slog?) - Внедрение логгера через интерфейс, в качестве логгера предпочтительно zap logger
+
+ - Pipeline с прогоном тестов и линтеров, сборкой приложения на платформе githab actions
+
+
+
+
+
+
+
+
+
+Пишем http оболочку:
+
+// GetLastRates Получить последние цены монет по title-ам
+//     pattern: /coins/rates
+//     method: POST
+//     info: Body
+
+// Suceed:
+//     HTTP статус код 200 OK
+//     response body :получить ресурс(JSON слайс) в теле ответа
+
+// Failed:
+//
+//			response body: получить JSON с полем message(error) и с полем time
+//			HTTP статус код:
+//	                     v 400 Bad Request(err JSON.Decode - ошибка ErrInvalidParam)
+//					         v 400 Bad Request(пустой слайс - ошибка ErrInvalidParam)
+//		                 v 500 Internal Server Error (ошибка сервера, базы данных и т.д. ошибка - ErrInternal)
+
+// GetAggregateRates Получить агрегированное значение цены монет по title-ам
+// pattern: /coins/rates/aggregate
+// method: POST
+// info: Body
+
+// Suceed:
+//     HTTP статус код 200 OK
+//     response body :получить ресурс(JSON слайс) в теле ответа
+
+// Failed:
+//
+//		response body: получить JSON с полем message(error) и с полем time
+//		HTTP статус код: 400 Bad Request(пустой слайс - ошибка ErrInvalidParam)
+//	                 200 OK {} / 404 Not Found  (отстутсвуют монеты - ошибка ErrInvalidParam)
+//	                 500 Internal Server Error (ошибка сервера, базы данных и т.д. ошибка - ErrInternal)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+- ActualizeRates Демон который подгружает монеты с определенным интервалом которые есть в базе ???
+    pattern: /coins/actual/{titles}
+    method: GET
+    info: pattern
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -66,4 +154,13 @@
   - status code: 400, 404, 500 ...
   -response body: JSON with error + time
 */
->>>>>>> 25dd5ba (task 3/7 completed corrected after review):text/text.txt
+
+
+установить golang-migrate from ubuntu
+ - перейти по адресу: https://github.com/golang-migrate/migrate/releases
+ - скачать: migrate.linux-amd64.tar.gz 
+ - переместить в папку: Downloads
+ - распаковать фаил в дерикторию: sudo tar -xzf ~/Downloads/migrate.linux-amd64.tar.gz -C /usr/local/bin/
+ - сделать его исполняемым: sudo chmod +x /usr/local/bin/migrate
+ - вызвать команду: migrate --help
+ - проверить версию: migrate -version

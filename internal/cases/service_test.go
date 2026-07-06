@@ -1,6 +1,5 @@
 package cases_test
 
-
 import (
 	"context"
 	"testing"
@@ -179,7 +178,7 @@ func TestGetAgregetedRates(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, service)
 
-		_, err = service.GetAgregetedRates(ctx, []string{}, avg)
+		_, err = service.GetAggregateRates(ctx, []string{}, avg)
 		require.Error(t, err)
 		require.ErrorIs(t, err, expectedErr)
 
@@ -187,14 +186,14 @@ func TestGetAgregetedRates(t *testing.T) {
 	t.Run("FailInvalidAggTypeLower", func(t *testing.T) {
 		mockProvider := mocks.NewCryptoProvider(t)
 		mockStorage := mocks.NewCryptoStorage(t)
-	
+
 		service, err := cases.NewService(mockProvider, mockStorage)
 		require.NoError(t, err)
 		require.NotNil(t, service)
 
 		mockStorage.EXPECT().GetCoinsList(ctx).Return(titles, nil)
 
-		_, err = service.GetAgregetedRates(ctx, titles, invalidAgg)
+		_, err = service.GetAggregateRates(ctx, titles, invalidAgg)
 		require.Error(t, err)
 		require.ErrorIs(t, err, expectedErr)
 
@@ -209,7 +208,7 @@ func TestGetAgregetedRates(t *testing.T) {
 
 		mockStorage.EXPECT().GetCoinsList(ctx).Return([]string{}, expectedErr)
 
-		_, err = service.GetAgregetedRates(ctx, titles, avg)
+		_, err = service.GetAggregateRates(ctx, titles, avg)
 		require.Error(t, err)
 		require.ErrorIs(t, err, expectedErr)
 
@@ -226,7 +225,7 @@ func TestGetAgregetedRates(t *testing.T) {
 		mockStorage.EXPECT().GetCoinsList(ctx).Return(titles, nil)
 		mockStorage.EXPECT().GetAggregateCoins(ctx, titles, avg).Return(nil, expectedErr)
 
-		_, err = service.GetAgregetedRates(ctx, titles, avg)
+		_, err = service.GetAggregateRates(ctx, titles, avg)
 		require.Error(t, err)
 		require.ErrorIs(t, err, expectedErr)
 	})
@@ -241,7 +240,7 @@ func TestGetAgregetedRates(t *testing.T) {
 		mockStorage.EXPECT().GetCoinsList(ctx).Return(titles, nil)
 		mockStorage.EXPECT().GetAggregateCoins(ctx, titles, avg).Return(expectedCoins, nil)
 
-		actualCoins, err := service.GetAgregetedRates(ctx, titles, avg)
+		actualCoins, err := service.GetAggregateRates(ctx, titles, avg)
 		require.NoError(t, err)
 		require.Equal(t, expectedCoins, actualCoins)
 	})

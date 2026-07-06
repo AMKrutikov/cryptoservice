@@ -173,3 +173,18 @@ func (c *Client) processStatusCode(response *http.Response) error {
 
 	return errors.Wrap(respErr, "response status code")
 }
+
+func (c *client) statusCode(response *http.Response) error {
+	var errStatusCode error
+	switch response.StatusCode {
+	case http.StatusInternalServerError:
+		errStatusCode = entities.ErrInternal
+	case http.StatusBadRequest:
+		errStatusCode = entities.ErrInvalidParam
+	// и т.д.
+		
+	}
+
+	return errors.Wrap(errStatusCode, "status code response")
+}
+

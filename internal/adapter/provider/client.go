@@ -21,13 +21,14 @@ const (
 
 	queryVs_currencies = "vs_currencies"
 	queryIds           = "ids"
+	queryApiKey        = "x_cg_demo_api_key"
 )
 
 type client struct {
-	apiAuthorization string // apiAuthorization := "x-cg-demo-api-key"
-	apiKey           string // apiKey := "CG-SdGMn7C5Rv2F4hTMwLdJ1Pk6"
-	vs_currencies    string // usd
-	httpClient       *http.Client
+	//apiAuthorization string
+	apiKey        string
+	vs_currencies string
+	httpClient    *http.Client
 }
 
 type Option func(c *client)
@@ -56,18 +57,14 @@ func (c *client) setOptions(opts ...Option) {
 	}
 }
 
-func NewProviderClient(apiAuthorization string, apiKey string, opts ...Option) (*client, error) {
-	if strings.TrimSpace(apiAuthorization) == "" {
-		return nil, errors.Wrap(entities.ErrInvalidParam, "apiAuthorization cannot be empty")
-	}
+func NewProviderClient(apiKey string, opts ...Option) (*client, error) {
 	if strings.TrimSpace(apiKey) == "" {
 		return nil, errors.Wrap(entities.ErrInvalidParam, "apiKey cannot be empty")
 	}
 	c := &client{
-		apiAuthorization: apiAuthorization,
-		apiKey:           apiKey,
-		vs_currencies:    strings.ToLower(defaultCostIn),
-		httpClient:       &http.Client{Timeout: time.Second * 10},
+		apiKey:        apiKey,
+		vs_currencies: strings.ToLower(defaultCostIn),
+		httpClient:    &http.Client{Timeout: time.Second * 10},
 	}
 
 	c.setOptions(opts...)
@@ -93,15 +90,19 @@ func (c *client) GetActualRates(ctx context.Context, titles []string) ([]*entiti
 		return nil, errors.Wrap(entities.ErrInternal, "provider api error")
 	}
 
-	resultCoins, err := c.decodeResponse(response)
+	resultCoins, missingCoin, err := c.decodeResponse(response, titles)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(missingCoin) > 0 {
+		return nil, errors.Wrapf(entities.ErrInvalidParam, "coins not found: %s", strings.Join(missingCoin, ", "))
 	}
 
 	return resultCoins, nil
 }
 
-func buildUrl(titles []string, vs_currencies string) (string, error) {
+func buildUrl(titles []string, vs_currencies string, apiKey string) (string, error) {
 
 	urlRaw, err := url.Parse(fmt.Sprintf("%s%s", baseURL, priceMultiPath))
 	if err != nil {
@@ -110,6 +111,8 @@ func buildUrl(titles []string, vs_currencies string) (string, error) {
 	query := urlRaw.Query() // map[string][]string
 	query.Set(queryVs_currencies, vs_currencies)
 	query.Set(queryIds, strings.Join(titles, ","))
+	query.Set(queryApiKey, apiKey)
+
 	urlRaw.RawQuery = query.Encode()
 
 	return urlRaw.String(), nil
@@ -125,7 +128,7 @@ func (c *client) prepareRequest(ctx context.Context, titles []string) (*http.Req
 		qureyTitles[idx] = strings.ToLower(elem)
 	}
 
-	url, err := buildUrl(qureyTitles, c.vs_currencies)
+	url, err := buildUrl(qureyTitles, c.vs_currencies, c.apiKey)
 	if err != nil {
 		return nil, err
 	}
@@ -134,16 +137,16 @@ func (c *client) prepareRequest(ctx context.Context, titles []string) (*http.Req
 	if err != nil {
 		return nil, errors.Wrapf(entities.ErrInternal, "request error: %v", err)
 	}
-	request.Header.Set(c.apiAuthorization, c.apiKey)
 
 	return request, nil
 }
 
-func (c *client) decodeResponse(response *http.Response) ([]*entities.Coin, error) {
+func (c *client) decodeResponse(response *http.Response, requestTitles []string) ([]*entities.Coin, []string, error) {
 	parsedResponse := make(map[string]map[string]float64)
+	missingsCoin := make([]string, 0, len(requestTitles))
 
 	if err := json.NewDecoder(response.Body).Decode(&parsedResponse); err != nil {
-		return nil, errors.Wrap(entities.ErrInternal, "invalid JSON response")
+		return nil, nil, errors.Wrap(entities.ErrInternal, "invalid JSON response")
 	}
 
 	resultCoins := make([]*entities.Coin, 0, len(parsedResponse))
@@ -155,5 +158,12 @@ func (c *client) decodeResponse(response *http.Response) ([]*entities.Coin, erro
 			}
 		}
 	}
-	return resultCoins, nil
+
+	for _, elem := range requestTitles {
+		if _, exists := parsedResponse[elem]; !exists {
+			missingsCoin = append(missingsCoin, elem)
+		}
+	}
+
+	return resultCoins, missingsCoin, nil
 }

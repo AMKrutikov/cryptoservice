@@ -14,12 +14,6 @@ type Service struct {
 	storage  CryptoStorage
 }
 
-var (
-	min = "min"
-	max = "max"
-	avg = "avg"
-)
-
 func NewService(provider CryptoProvider, storage CryptoStorage) (*Service, error) {
 	if provider == nil {
 		return nil, errors.Wrap(entities.ErrInvalidParam, "provider cannot be nil")
@@ -33,7 +27,7 @@ func NewService(provider CryptoProvider, storage CryptoStorage) (*Service, error
 	}, nil
 }
 
-func (s *Service) GetLastRates(ctx context.Context, titles []string) ([]*entities.Coin, error) { // Получить последние цены
+func (s *Service) GetLastRates(ctx context.Context, titles []string) ([]*entities.Coin, error) {
 	if err := s.processCoins(ctx, titles); err != nil {
 		return nil, errors.Wrap(err, "failed to process coins")
 	}
@@ -45,17 +39,17 @@ func (s *Service) GetLastRates(ctx context.Context, titles []string) ([]*entitie
 	return actualCoins, nil
 }
 
-func (s *Service) GetAgregetedRates(ctx context.Context, titles []string, aggType string) ([]*entities.Coin, error) {
+func (s *Service) GetAggregateRates(ctx context.Context, titles []string, aggType string) ([]*entities.Coin, error) {
 	if err := s.processCoins(ctx, titles); err != nil {
 		return nil, errors.Wrap(err, "failed to process coins")
 	}
 
-	aggTypeLower := strings.ToLower(aggType)
-	if aggTypeLower != min && aggTypeLower != max && aggTypeLower != avg {
+	aggTypeUpper := strings.ToUpper(aggType)
+	if aggTypeUpper != "MIN" && aggTypeUpper != "MAX" && aggTypeUpper != "AVG" {
 		return nil, errors.Wrap(entities.ErrInvalidParam, "incorrect value for agregeted rates")
 	}
 
-	aggCoin, err := s.storage.GetAggregateCoins(ctx, titles, aggTypeLower)
+	aggCoin, err := s.storage.GetAggregateCoins(ctx, titles, aggTypeUpper)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get aggregated coins from storage")
 	}
