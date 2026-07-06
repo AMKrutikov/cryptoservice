@@ -22,7 +22,7 @@
 // adapter storage и все методы pgx v5 в качестве соединения *pgxpool.Pool
 // переходишь к реализации порта (chi/gorilla/gin)
 
- - анатации doc.go, handler.go . - на их основании сгенерировать swagger документацию.
+// - анатации doc.go, handler.go . - на их основании сгенерировать swagger документацию.
  - подготовка config, adapter config, application сборка приложения, main
 
 

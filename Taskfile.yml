@@ -16,7 +16,7 @@ tasks:
     cmds:
       - go install github.com/vektra/mockery/v2@v2.53.6
       - go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
-      - go install github.com/swaggo/swag/cmd/swag@latest
+      - go install github.com/swaggo/swag/cmd/swag@v1.16.4
     silent: true
   
   mock:
@@ -40,8 +40,8 @@ tasks:
   run:
     desc: Run app
     cmds:
-      - go run cmd/app/main.go
-    silent: true
+      - PATH_CONFIG="config/cryptoservice.yaml" go run cmd/app/main.go
+    silent: false
 
   postgres-down:
     desc: Down docker-compose

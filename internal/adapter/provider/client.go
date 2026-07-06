@@ -24,9 +24,9 @@ const (
 )
 
 type client struct {
-	apiAuthorization string // apiAuthorization := "x-cg-demo-api-key"
-	apiKey           string // apiKey := "CG-SdGMn7C5Rv2F4hTMwLdJ1Pk6"
-	vs_currencies    string // usd
+	apiAuthorization string
+	apiKey           string
+	vs_currencies    string
 	httpClient       *http.Client
 }
 

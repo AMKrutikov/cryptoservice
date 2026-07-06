@@ -12,7 +12,7 @@ import (
 
 const (
 	basePath      = "/cryptoservice/v1"
-	ratesPath     = "/coins/rates"
+	ratesPath     = "/cryptoservice/v1/coins/rates/aggregate"
 	aggregatePath = "/aggregate"
 )
 
