@@ -187,3 +187,4 @@ func (c *client) statusCode(response *http.Response) error {
 
 	return errors.Wrap(errStatusCode, "status code response")
 }
+
