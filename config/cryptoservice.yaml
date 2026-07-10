@@ -14,5 +14,3 @@ postgres:
 providers:
   coingecko:
     api_key: "CG-SdGMn7C5Rv2F4hTMwLdJ1Pk6"
-
-actualizerates_interval: 20s
