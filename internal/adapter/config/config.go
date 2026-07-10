@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/file"
@@ -43,12 +42,4 @@ func (c *Config) StorageConnectionString(storageType string) string {
 
 func (c *Config) CoingeckoAPIKey() string {
 	return c.Koanf.String("providers.coingecko.api_key")
-}
-
-func (c *Config) ActualizeInterval() time.Duration {
-	t := c.Koanf.Duration("actualizerates_interval")
-	if t > 0 {
-		return c.Koanf.Duration("actualizerates_interval")
-	}
-	return time.Minute * 5
 }

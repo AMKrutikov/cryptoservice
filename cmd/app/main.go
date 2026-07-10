@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"strings"
 
@@ -9,6 +10,7 @@ import (
 )
 
 func main() {
+	ctx := context.Background()
 	path := os.Getenv("PATH_CONFIG")
 	if strings.TrimSpace(path) == "" {
 		path = "config/cryptoservice.yaml"
@@ -16,6 +18,6 @@ func main() {
 
 	cnfg := config.NewConfig(path)
 	app := application.NewApplication(cnfg)
-	app.Run()
+	app.Run(ctx)
 
 }

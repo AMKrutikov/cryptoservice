@@ -82,7 +82,7 @@ func (c *client) GetActualRates(ctx context.Context, titles []string) ([]*entiti
 
 	response, err := c.httpClient.Do(request)
 	if err != nil {
-		return nil, errors.Wrap(entities.ErrInternal, "response error")
+		return nil, errors.Wrapf(entities.ErrInternal, "response error: %v", err)
 	}
 	defer response.Body.Close()
 

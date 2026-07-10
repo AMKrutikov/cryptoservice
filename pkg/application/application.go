@@ -1,12 +1,17 @@
 package application
 
 import (
+	"context"
+	"fmt"
+	"time"
+
 	"github.com/AMKrutikov/cryptoservice/internal/adapter/config"
 	coingecko "github.com/AMKrutikov/cryptoservice/internal/adapter/provider"
 	"github.com/AMKrutikov/cryptoservice/internal/adapter/storage/postgres"
 	"github.com/AMKrutikov/cryptoservice/internal/cases"
 	"github.com/AMKrutikov/cryptoservice/internal/port"
 	"github.com/AMKrutikov/cryptoservice/internal/port/http/public"
+	"github.com/robfig/cron/v3"
 )
 
 type Application struct {
@@ -15,6 +20,7 @@ type Application struct {
 	provider cases.CryptoProvider
 	storage  cases.CryptoStorage
 	service  port.Service
+	cron     *cron.Cron
 
 	publicPort *public.Server
 }
@@ -25,15 +31,12 @@ func NewApplication(cnfg *config.Config) *Application {
 	}
 }
 
-func (app *Application) Run() {
+func (app *Application) Run(ctx context.Context) {
 	app.initCryptoProvider()
 	app.initStorage()
 	app.initService()
 	app.initPublicHTTPPort()
-
-	// ctx, cancel := context.WithCancel(context.Background())
-	// defer cancel()
-	// app.initActualizeInterval(ctx)
+	app.initCron(ctx)
 
 	if err := app.startHTTPPublic(); err != nil {
 		panic(err)
@@ -41,7 +44,6 @@ func (app *Application) Run() {
 }
 
 func (app *Application) initCryptoProvider() {
-	//authKey := app.cnfg.CoingeckoAuthKey()
 	apiKey := app.cnfg.CoingeckoAPIKey()
 	client, err := coingecko.NewProviderClient(apiKey)
 	if err != nil {
@@ -83,23 +85,23 @@ func (app *Application) startHTTPPublic() error {
 
 }
 
-// func (app *Application) initActualizeInterval(ctx context.Context) {
-// 	interval := app.cnfg.ActualizeInterval()
+func (app *Application) initCron(ctx context.Context) {
 
-// 	ticker := time.NewTicker(interval)
+	app.cron = cron.New(cron.WithSeconds())
+	Shedule := "0 */1 * * * *"
 
-// 	go func() {
-// 		defer ticker.Stop()
-// 		for {
-// 			select {
-// 			case <-ctx.Done():
-// 				return
-// 			case <-ticker.C:
-// 				app.service.ActualizeRates(ctx)
-// 			}
-// 		}
-// 	}()
+	_, err := app.cron.AddFunc(Shedule, func() {
+		ctxTime, cancel := context.WithTimeout(ctx, time.Second*30)
+		defer cancel()
+		if err := app.service.ActualizeRates(ctxTime); err != nil {
+			fmt.Printf("Cron execution error: %v\n", err)
+			return
+		}
+		fmt.Println("Cron: Crypto rates successfully actualized.")
+	})
+	if err != nil {
+		panic(fmt.Errorf("failed to start the cron job: %w\n", err))
+	}
 
-// }
-
-// cronJob
+	app.cron.Start()
+}
