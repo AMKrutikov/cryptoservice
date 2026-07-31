@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/file"
@@ -41,5 +42,12 @@ func (c *Config) StorageConnectionString(storageType string) string {
 }
 
 func (c *Config) CoingeckoAPIKey() string {
-	return c.Koanf.String("providers.coingecko.api_key")
+	// 1. Пытаемся взять ключ из YAML-файла
+	key := c.Koanf.String("providers.coingecko.api_key")
+
+	// 2. Если в YAML поле пустое, берем напрямую из переменной окружения Docker
+	if key == "" {
+		return os.Getenv("COINGECKO_API_KEY")
+	}
+	return key
 }

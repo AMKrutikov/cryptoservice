@@ -23,3 +23,20 @@ services:
     depends_on:
       db:
         condition: service_healthy
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cryptoservice_app
+    restart: always
+    ports:
+    - "8080:8080"
+    environment:
+      - PATH_CONFIG=config/cryptoservice.yaml
+
+      # 1. Передаем чистый ключ, который ваш метод CoingeckoAPIKey() заберет через os.Getenv("COINGECKO_API_KEY")
+      - COINGECKO_API_KEY=${COINGECKO_API_KEY}
+    depends_on:
+      migrator:
+        condition: service_completed_successfully

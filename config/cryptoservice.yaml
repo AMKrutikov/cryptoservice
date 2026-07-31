@@ -9,8 +9,8 @@ port:
 storage:
   type: postgres
 postgres:
-  connection_string: postgres://postgres:123456@localhost:5432/postgres?sslmode=disable
+  connection_string: postgres://postgres:123456@db:5432/postgres?sslmode=disable
 
 providers:
   coingecko:
-    api_key: "CG-SdGMn7C5Rv2F4hTMwLdJ1Pk6"
+    api_key:
