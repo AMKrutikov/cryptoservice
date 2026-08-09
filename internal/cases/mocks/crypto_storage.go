@@ -22,6 +22,38 @@ func (_m *CryptoStorage) EXPECT() *CryptoStorage_Expecter {
 	return &CryptoStorage_Expecter{mock: &_m.Mock}
 }
 
+// Close provides a mock function with no fields
+func (_m *CryptoStorage) Close() {
+	_m.Called()
+}
+
+// CryptoStorage_Close_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Close'
+type CryptoStorage_Close_Call struct {
+	*mock.Call
+}
+
+// Close is a helper method to define mock.On call
+func (_e *CryptoStorage_Expecter) Close() *CryptoStorage_Close_Call {
+	return &CryptoStorage_Close_Call{Call: _e.mock.On("Close")}
+}
+
+func (_c *CryptoStorage_Close_Call) Run(run func()) *CryptoStorage_Close_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *CryptoStorage_Close_Call) Return() *CryptoStorage_Close_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *CryptoStorage_Close_Call) RunAndReturn(run func()) *CryptoStorage_Close_Call {
+	_c.Run(run)
+	return _c
+}
+
 // GetActualCoins provides a mock function with given fields: ctx, titles
 func (_m *CryptoStorage) GetActualCoins(ctx context.Context, titles []string) ([]*entities.Coin, error) {
 	ret := _m.Called(ctx, titles)

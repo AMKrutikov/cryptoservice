@@ -168,7 +168,7 @@ func TestGetAgregetedRates(t *testing.T) {
 	coin2, err := entities.NewCoin("ETH", 500.00, tNow)
 	require.NoError(t, err)
 	expectedCoins := []*entities.Coin{coin1, coin2}
-	avg := "avg"
+	avg := "AVG"
 	invalidAgg := "invalidAgg"
 	t.Run("FailLenTitles", func(t *testing.T) {
 		mockProvider := mocks.NewCryptoProvider(t)

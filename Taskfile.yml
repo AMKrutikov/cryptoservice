@@ -31,23 +31,23 @@ tasks:
       - swag init -g internal/port/http/public/doc.go --parseDependency --parseInternal
     silent: true
 
-  postgres-up:
+  run-app-docker:
     desc: Run docker-compose
     cmds:
       - docker compose up -d
     silent: true
 
-  run:
-    desc: Run app
-    cmds:
-      - PATH_CONFIG="config/cryptoservice.yaml" go run cmd/app/main.go
-    silent: false
-
-  postgres-down:
+  down-app-docker:
     desc: Down docker-compose
     cmds:
       - docker compose down
     silent: true
+
+  run-app:
+    desc: Run app
+    cmds:
+      - PATH_CONFIG="config/cryptoservice.yaml" go run cmd/app/main.go
+    silent: false
 
   migrate-docker-down-bystep:
     desc: Roll back migrations inside Docker (default N=1, set N=...)

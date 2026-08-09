@@ -1,6 +1,7 @@
 package public
 
 import (
+	"context"
 	"net/http"
 
 	_ "github.com/AMKrutikov/cryptoservice/docs"
@@ -16,8 +17,9 @@ const (
 )
 
 type Server struct {
-	service port.Service
-	router  *mux.Router
+	service    port.Service
+	router     *mux.Router
+	httpServer *http.Server
 }
 
 func NewServer(service port.Service) *Server {
@@ -33,5 +35,19 @@ func (s *Server) StartServer(address string) error {
 
 	s.router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
+	s.httpServer = &http.Server{
+		Addr:    address,
+		Handler: s.router,
+	}
+
 	return http.ListenAndServe(address, s.router)
+}
+
+func (s *Server) Stop(ctx context.Context) error {
+
+	if s.httpServer == nil {
+		return nil
+	}
+
+	return s.httpServer.Shutdown(ctx)
 }

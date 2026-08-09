@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/AMKrutikov/cryptoservice/internal/adapter/config"
@@ -38,9 +39,48 @@ func (app *Application) Run(ctx context.Context) {
 	app.initPublicHTTPPort()
 	app.initCron(ctx)
 
-	if err := app.startHTTPPublic(); err != nil {
-		panic(err)
+	go func() {
+		if err := app.startHTTPPublic(); err != nil && err != http.ErrServerClosed {
+			fmt.Printf("HTTP server error: %v", err)
+		}
+	}()
+
+	fmt.Println("Application is running...")
+
+}
+
+func (app *Application) Stop() {
+	fmt.Println("Shutting down application...")
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if app.cron != nil {
+		fmt.Println("Stopping cron scheduler...")
+		cronCtxStop := app.cron.Stop()
+		select {
+		case <-cronCtxStop.Done():
+			fmt.Println("Cron scheduler shutdown completed")
+		case <-shutdownCtx.Done():
+			fmt.Println("Cron scheduler stopped timeout")
+		}
 	}
+
+	if app.publicPort != nil {
+		fmt.Println("Stopping httpServer...")
+		if err := app.publicPort.Stop(shutdownCtx); err != nil {
+			fmt.Printf("HTTP server shutdown error: %v\n", err)
+		} else {
+			fmt.Println("HTTP server shutdown completed")
+		}
+	}
+
+	if app.storage != nil {
+		fmt.Println("Closing database connections...")
+		app.storage.Close()
+		fmt.Println("Database shutdown completed")
+	}
+
 }
 
 func (app *Application) initCryptoProvider() {
@@ -88,10 +128,10 @@ func (app *Application) startHTTPPublic() error {
 func (app *Application) initCron(ctx context.Context) {
 
 	app.cron = cron.New(cron.WithSeconds())
-	Shedule := "0 */1 * * * *"
+	Schedule := "0 */1 * * * *"
 
-	_, err := app.cron.AddFunc(Shedule, func() {
-		ctxTime, cancel := context.WithTimeout(ctx, time.Second*30)
+	_, err := app.cron.AddFunc(Schedule, func() {
+		ctxTime, cancel := context.WithTimeout(ctx, time.Second*10)
 		defer cancel()
 		if err := app.service.ActualizeRates(ctxTime); err != nil {
 			fmt.Printf("Cron execution error: %v\n", err)
